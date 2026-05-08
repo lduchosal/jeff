@@ -283,18 +283,24 @@ def extract_photo(
             ext = mapped
             break
 
-    # Get binary data.
-    encoding = photo_prop.params.get("ENCODING", [None])[0]
-    if encoding and encoding.upper() == "B":
-        photo_bytes = base64.b64decode(photo_prop.value)
-    elif isinstance(photo_prop.value, bytes):
-        photo_bytes = photo_prop.value
-    elif isinstance(photo_prop.value, str) and photo_prop.value.startswith("data:"):
-        # data URI
-        _, encoded = photo_prop.value.split(",", 1)
-        photo_bytes = base64.b64decode(encoded)
+    # Get binary data. vobject may already decode base64 to bytes.
+    value = photo_prop.value
+    if isinstance(value, bytes):
+        photo_bytes = value
+    elif isinstance(value, str):
+        if value.startswith("data:"):
+            _, encoded = value.split(",", 1)
+            photo_bytes = base64.b64decode(encoded)
+        elif value.startswith("http"):
+            # External URL — skip extraction.
+            return None
+        else:
+            # Try base64 decode (raw base64 string).
+            try:
+                photo_bytes = base64.b64decode(value)
+            except Exception:
+                return None
     else:
-        # Likely a URL — skip extraction.
         return None
 
     photo_dir.mkdir(parents=True, exist_ok=True)
