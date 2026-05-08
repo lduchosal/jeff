@@ -36,6 +36,7 @@ dependencies = [
 text = "MIT"
 
 [project.scripts]
+jeff = "jeff.cli:cli"
 
 [dependency-groups]
 dev = [
