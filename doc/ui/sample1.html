@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marie Laurent — CRM Contact</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="contact.css">
+</head>
+<body>
+
+<article class="contact-page">
+
+  <!-- ===== Main Content ===== -->
+  <div class="contact-main">
+
+    <!-- Header -->
+    <header class="contact-header">
+      <div class="contact-avatar--placeholder" aria-hidden="true">M</div>
+      <div class="contact-header__info">
+        <h1 class="contact-name">Marie Laurent</h1>
+        <p class="contact-title">Directrice technique</p>
+        <p class="contact-org">Helvetia Digital SA</p>
+      </div>
+    </header>
+
+    <!-- Follow-up banner -->
+    <div class="followup-banner">
+      <span class="followup-banner__icon" aria-hidden="true">&#128197;</span>
+      <span class="followup-banner__text">
+        <strong>Next follow-up:</strong> May 15, 2026
+      </span>
+    </div>
+
+    <!-- Contact Details -->
+    <section class="section">
+      <h2 class="section__title">Contact Details</h2>
+      <div class="field-list">
+        <div class="field">
+          <span class="field__label">Email</span>
+          <span class="field__value"><a href="mailto:marie.laurent@helvetia-digital.ch">marie.laurent@helvetia-digital.ch</a></span>
+        </div>
+        <div class="field">
+          <span class="field__label">Phone</span>
+          <span class="field__value"><a href="tel:+41791234567">+41 79 123 45 67</a></span>
+        </div>
+        <div class="field">
+          <span class="field__label">Work</span>
+          <span class="field__value">
+            Rue du Marché 12<br>
+            1204 Genève<br>
+            Switzerland
+          </span>
+        </div>
+        <div class="field">
+          <span class="field__label">Website</span>
+          <span class="field__value"><a href="https://helvetia-digital.ch">helvetia-digital.ch</a></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CRM Data -->
+    <section class="section">
+      <h2 class="section__title">CRM</h2>
+      <div class="field-list">
+        <div class="field">
+          <span class="field__label">Tags</span>
+          <span class="field__value">
+            <div class="tag-list">
+              <span class="tag tag--accent">Client</span>
+              <span class="tag tag--success">Decision Maker</span>
+              <span class="tag">Tech</span>
+              <span class="tag">Q2 Pipeline</span>
+            </div>
+          </span>
+        </div>
+        <div class="field">
+          <span class="field__label">Score</span>
+          <span class="field__value">
+            <span class="score score--high">
+              <span class="score__dot"></span>
+              87
+            </span>
+          </span>
+        </div>
+        <div class="field">
+          <span class="field__label">Status</span>
+          <span class="field__value">
+            <span class="tag tag--success">Active</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interaction Timeline -->
+    <section class="section">
+      <h2 class="section__title">Interactions</h2>
+      <div class="timeline">
+        <div class="timeline__item">
+          <div class="timeline__dot"></div>
+          <time class="timeline__date" datetime="2026-05-06">May 6, 2026</time>
+          <div class="timeline__content">
+            <strong>Email</strong> &mdash; Envoi de la proposition technique pour la phase 2 de l'intégration API. Marie souhaite un chiffrage détaillé avant le board du 20 mai.
+          </div>
+        </div>
+        <div class="timeline__item">
+          <div class="timeline__dot"></div>
+          <time class="timeline__date" datetime="2026-04-22">Apr 22, 2026</time>
+          <div class="timeline__content">
+            <strong>Call</strong> &mdash; Revue du POC CardDAV sync. Retour positif sur la démo. Points ouverts : gestion des photos, performance sur leur carnet de 2000+ contacts.
+          </div>
+        </div>
+        <div class="timeline__item">
+          <div class="timeline__dot"></div>
+          <time class="timeline__date" datetime="2026-04-10">Apr 10, 2026</time>
+          <div class="timeline__content">
+            <strong>Meeting</strong> &mdash; Kick-off avec l'équipe engineering chez Helvetia Digital. Présents : Marie, Thomas Berger (lead backend), Ana Rossi (product). Besoin identifié : synchronisation contacts CardDAV vers CRM interne.
+          </div>
+        </div>
+        <div class="timeline__item">
+          <div class="timeline__dot"></div>
+          <time class="timeline__date" datetime="2026-03-18">Mar 18, 2026</time>
+          <div class="timeline__content">
+            <strong>Email</strong> &mdash; Premier contact via intro de Pierre Blanc. Marie cherche une solution de CRM légère compatible avec leur stack self-hosted.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notes -->
+    <section class="section">
+      <h2 class="section__title">Notes</h2>
+      <div class="prose">
+        <p>Rencontrée via Pierre Blanc (ancien collègue chez Swisscom). Marie pilote la transformation digitale chez Helvetia Digital depuis 2024. Très orientée open source et self-hosting — allergique au vendor lock-in.</p>
+        <p>Son équipe utilise Baikal pour le CardDAV, Hugo pour la doc interne, et Gitea pour le code. Le fit avec notre stack est excellent. Budget décidé au niveau direction, Marie a le go technique.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="contact-sidebar">
+
+    <!-- Positions -->
+    <section class="section">
+      <h2 class="section__title">Positions</h2>
+      <div class="related-contact">
+        <div class="related-contact__info">
+          <div class="related-contact__name">Directrice technique</div>
+          <div class="related-contact__role">Helvetia Digital SA</div>
+        </div>
+      </div>
+      <div class="related-contact">
+        <div class="related-contact__info">
+          <div class="related-contact__name">Lead Architect</div>
+          <div class="related-contact__role">Swisscom (2019–2023)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Related Contacts -->
+    <section class="section">
+      <h2 class="section__title">Related</h2>
+      <a class="related-contact" href="#">
+        <div class="related-contact__avatar" aria-hidden="true"></div>
+        <div class="related-contact__info">
+          <div class="related-contact__name">Pierre Blanc</div>
+          <div class="related-contact__role">Introducteur</div>
+        </div>
+      </a>
+      <a class="related-contact" href="#">
+        <div class="related-contact__avatar" aria-hidden="true"></div>
+        <div class="related-contact__info">
+          <div class="related-contact__name">Thomas Berger</div>
+          <div class="related-contact__role">Lead Backend, Helvetia Digital</div>
+        </div>
+      </a>
+      <a class="related-contact" href="#">
+        <div class="related-contact__avatar" aria-hidden="true"></div>
+        <div class="related-contact__info">
+          <div class="related-contact__name">Ana Rossi</div>
+          <div class="related-contact__role">Product Manager, Helvetia Digital</div>
+        </div>
+      </a>
+    </section>
+
+    <!-- Social -->
+    <section class="section">
+      <h2 class="section__title">Social</h2>
+      <a class="related-contact" href="#" target="_blank" rel="noopener">
+        <div class="related-contact__info">
+          <div class="related-contact__name">LinkedIn</div>
+        </div>
+      </a>
+      <a class="related-contact" href="#" target="_blank" rel="noopener">
+        <div class="related-contact__info">
+          <div class="related-contact__name">GitHub</div>
+        </div>
+      </a>
+    </section>
+
+  </aside>
+
+</article>
+
+</body>
+</html>
