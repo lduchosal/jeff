@@ -1,11 +1,11 @@
 ---
 id: 274
-status: review
+status: done
 who: Claude
 due_date: 
-position: 0
+position: 4
 created_at: 2026-05-08T21:11:04
-updated_at: 2026-05-08T21:11:35
+updated_at: 2026-05-08T21:27:18
 ---
 
 # SRC / Checkout repo

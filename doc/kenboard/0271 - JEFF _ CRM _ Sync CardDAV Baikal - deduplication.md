@@ -1,11 +1,11 @@
 ---
 id: 271
-status: doing
+status: done
 who: Claude
 due_date: 
-position: 0
+position: 3
 created_at: 2026-05-08T19:12:36
-updated_at: 2026-05-08T21:18:43
+updated_at: 2026-05-08T21:27:09
 ---
 
 # JEFF / CRM / Sync CardDAV Baikal - deduplication
