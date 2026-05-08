@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ contact.name }} — Contacts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/contact.css">
+</head>
+<body>
+
+<article class="contact-page">
+
+  <div class="contact-main">
+
+    <header class="contact-header">
+      {% if contact.photo %}
+        <img class="contact-avatar" src="../{{ contact.photo }}" alt="{{ contact.name }}">
+      {% else %}
+        <div class="contact-avatar--placeholder" aria-hidden="true">{{ contact.name[:1] }}</div>
+      {% endif %}
+      <div class="contact-header__info">
+        <h1 class="contact-name">{{ contact.name }}</h1>
+        {% if contact.positions %}
+          <p class="contact-title">{{ contact.positions[0].title or '' }}</p>
+          <p class="contact-org">{{ contact.positions[0].org or '' }}</p>
+        {% endif %}
+      </div>
+    </header>
+
+    {% if contact.tags %}
+    <section class="section">
+      <h2 class="section__title">Tags</h2>
+      <div class="tag-list">
+        {% for tag in contact.tags %}
+          <span class="tag">{{ tag }}</span>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if contact.note %}
+    <section class="section">
+      <h2 class="section__title">Notes</h2>
+      <div class="prose">
+        {% for paragraph in contact.note.split('\n\n') %}
+          <p>{{ paragraph }}</p>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+  </div>
+
+  <aside class="contact-sidebar">
+
+    <section class="section">
+      <h2 class="section__title">Coordonnées</h2>
+      <div class="field-list">
+        {% if contact.email %}
+        <div class="field field--stacked">
+          <span class="field__label">Email</span>
+          <span class="field__value"><a href="mailto:{{ contact.email }}" target="_blank" rel="noopener noreferrer">{{ contact.email }}</a></span>
+        </div>
+        {% endif %}
+        {% if contact.phone %}
+        <div class="field field--stacked">
+          <span class="field__label">Téléphone</span>
+          <span class="field__value"><a href="tel:{{ contact.phone }}" target="_blank" rel="noopener noreferrer">{{ contact.phone }}</a></span>
+        </div>
+        <div class="field field--stacked">
+          <span class="field__label">WhatsApp</span>
+          <span class="field__value"><a href="https://wa.me/{{ contact.phone | replace('+', '') | replace(' ', '') }}" target="_blank" rel="noopener noreferrer">{{ contact.phone }}</a></span>
+        </div>
+        {% endif %}
+        {% if contact.birthday %}
+        <div class="field field--stacked">
+          <span class="field__label">Anniversaire</span>
+          <span class="field__value">{{ contact.birthday }}</span>
+        </div>
+        {% endif %}
+        {% for addr in contact.addresses or [] %}
+        <div class="field field--stacked">
+          <span class="field__label">{{ addr.type | default('Adresse') | title }}</span>
+          <span class="field__value">
+            {% if addr.street %}{{ addr.street }}<br>{% endif %}
+            {% if addr.postal_code %}{{ addr.postal_code }} {% endif %}{{ addr.city or '' }}
+            {% if addr.country %}<br>{{ addr.country }}{% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    {% if contact.positions %}
+    <section class="section">
+      <h2 class="section__title">Positions</h2>
+      {% for pos in contact.positions %}
+      <div class="related-contact">
+        <div class="related-contact__info">
+          <div class="related-contact__name">{{ pos.title or '' }}</div>
+          <div class="related-contact__role">{{ pos.org or '' }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if contact.urls %}
+    <section class="section">
+      <h2 class="section__title">Liens</h2>
+      {% for u in contact.urls %}
+      <a class="related-contact" href="{{ u.url }}" target="_blank" rel="noopener noreferrer">
+        <div class="related-contact__info">
+          <div class="related-contact__name">{{ u.type | default('Web') | title }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+  </aside>
+
+</article>
+
+</body>
+</html>

@@ -1,9 +1,10 @@
-"""Jeff CLI — sync CardDAV contacts to Markdown.
+"""Jeff CLI — sync CardDAV contacts to Markdown and publish HTML.
 
 Usage::
 
     jeff sync          # incremental sync
     jeff sync --full   # force full sync
+    jeff publish       # build static HTML site
 """
 
 from __future__ import annotations
@@ -114,3 +115,27 @@ def sync(ctx: click.Context, full: bool) -> None:
             click.echo(f"Removed: {len(removed)} contact(s)")
             for name in sorted(removed):
                 click.echo(f"  - {name}")
+
+
+@cli.command()
+@click.option(
+    "--output", "-o", default="public", help="Output directory (default: public)."
+)
+@click.pass_context
+def publish(ctx: click.Context, output: str) -> None:
+    """Build a static HTML site from synced Markdown contacts."""
+    from jeff.publish import build_site
+
+    cfg = ctx.obj["cfg"]
+    base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
+    content_dir = base / cfg.content_dir
+    photo_dir = base / cfg.photo_dir
+    output_dir = base / output
+
+    # Look for contact.css in doc/ui or bundled.
+    css_path = base / "doc" / "ui" / "contact.css"
+    if not css_path.is_file():
+        css_path = None
+
+    count = build_site(content_dir, output_dir, photo_dir, css_path)
+    click.echo(f"Published {count} contact(s) to {output_dir}")

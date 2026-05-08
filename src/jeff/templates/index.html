@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contacts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/contact.css">
+</head>
+<body>
+
+<div class="contact-page" style="display: block;">
+
+  <header class="contact-header" style="border-bottom: none; padding-bottom: 0;">
+    <div class="contact-header__info">
+      <h1 class="contact-name">Contacts</h1>
+      <p class="contact-title">{{ contacts | length }} contact{{ 's' if contacts | length != 1 }}</p>
+    </div>
+  </header>
+
+  <div style="margin-top: var(--space-4);">
+    {% for contact in contacts %}
+    <a class="related-contact" href="contacts/{{ contact.slug }}.html">
+      {% if contact.photo %}
+        <img class="related-contact__avatar" src="{{ contact.photo }}" alt="">
+      {% else %}
+        <div class="related-contact__avatar" aria-hidden="true"></div>
+      {% endif %}
+      <div class="related-contact__info">
+        <div class="related-contact__name">{{ contact.name }}</div>
+        <div class="related-contact__role">
+          {%- if contact.tags %}{{ contact.tags | join(', ') }}{% endif -%}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+</div>
+
+</body>
+</html>
