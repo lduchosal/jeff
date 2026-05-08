@@ -25,6 +25,7 @@ class JeffConfig:
     sync_state_path: str = ".sync-state.json"
     content_dir: str = "content/contacts"
     photo_dir: str = "static/photos"
+    publish_url: str = ""
     jeff_file: Path | None = None
 
     def validate(self) -> list[str]:
@@ -125,6 +126,10 @@ def load_config(config_path: str | None = None) -> JeffConfig:
         photo_dir=(
             os.environ.get("JEFF_PHOTO_DIR")
             or file_data.get("photo_dir", "static/photos")
+        ),
+        publish_url=(
+            os.environ.get("JEFF_PUBLISH_URL")
+            or file_data.get("publish_url", "")
         ),
         jeff_file=jeff_path,
     )

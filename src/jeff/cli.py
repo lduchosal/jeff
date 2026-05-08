@@ -100,6 +100,29 @@ def sync(ctx: click.Context, full: bool) -> None:
         if contact.href in new_state.contacts:
             new_state.contacts[contact.href]["slug"] = slug
 
+    # Write CRM URL back to Baikal (if publish_url is configured).
+    url_count = 0
+    if cfg.publish_url and updated:
+        from jeff.urlback import build_profile_url, inject_crm_url
+
+        for contact in updated:
+            data = parse_vcard(contact.vcard_raw)
+            slug = data.get("slug", "")
+            if not slug:
+                continue
+            profile_url = build_profile_url(cfg.publish_url, slug)
+            new_vcard = inject_crm_url(contact.vcard_raw, profile_url)
+            if new_vcard is None:
+                continue  # URL already present.
+            new_etag = client.put_contact(
+                contact.href, new_vcard, contact.etag
+            )
+            if new_etag:
+                url_count += 1
+                # Update state with new etag (PUT changes it).
+                if contact.href in new_state.contacts:
+                    new_state.contacts[contact.href]["etag"] = new_etag
+
     # Save state.
     new_state.save(state_path)
 
@@ -115,6 +138,8 @@ def sync(ctx: click.Context, full: bool) -> None:
             click.echo(f"Removed: {len(removed)} contact(s)")
             for name in sorted(removed):
                 click.echo(f"  - {name}")
+        if url_count:
+            click.echo(f"URL written back: {url_count} contact(s)")
 
 
 @cli.command()

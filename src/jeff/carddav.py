@@ -240,6 +240,25 @@ class CardDAVClient:
         )
         return updated, deleted, new_state
 
+    def put_contact(self, href: str, vcard_raw: str, etag: str) -> str | None:
+        """Update a contact on the server via PUT.
+
+        Uses ``If-Match`` with the given etag for optimistic locking.
+        Returns the new etag on success, or None on conflict (412).
+        """
+        url = self._absolute(href)
+        headers = {
+            "Content-Type": "text/vcard",
+            "If-Match": f'"{etag}"',
+        }
+        resp = self._session.put(url, data=vcard_raw.encode("utf-8"), headers=headers)
+        if resp.status_code == 412:
+            return None
+        resp.raise_for_status()
+        # Baikal returns the new etag in the ETag header.
+        new_etag = resp.headers.get("ETag", "").strip('"')
+        return new_etag or None
+
     def _absolute(self, href: str) -> str:
         """Resolve a relative href to an absolute URL."""
         if href.startswith("http"):
