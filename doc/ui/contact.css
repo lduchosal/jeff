@@ -221,6 +221,11 @@ body {
   text-decoration: underline;
 }
 
+.field--stacked {
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+}
+
 @media (max-width: 480px) {
   .field {
     grid-template-columns: 1fr;
