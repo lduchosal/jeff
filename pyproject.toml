@@ -27,6 +27,9 @@ classifiers = [
     "Topic :: Office/Business",
 ]
 dependencies = [
+    "requests>=2.28",
+    "lxml>=5.0",
+    "vobject>=0.9.8",
 ]
 
 [project.license]
