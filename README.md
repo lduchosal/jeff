@@ -32,6 +32,15 @@ carddav_password=secret
 chmod 600 .jeff
 ```
 
+## Usage
+
+```sh
+jeff sync          # incremental sync (only changed contacts)
+jeff sync --full   # force full re-sync
+```
+
+This creates one Markdown file per contact in `content/contacts/`, extracts photos to `static/photos/`, and tracks sync state in `.sync-state.json`.
+
 ## License
 
 MIT
