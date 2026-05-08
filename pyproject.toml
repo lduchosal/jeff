@@ -1,5 +1,5 @@
 [project]
-name = "jeff"
+name = "jeff-contacts"
 version = "0.1.0"
 description = "CRM Markdown synchronisé depuis CardDAV (Baikal), publié en site statique Hugo."
 authors = [
