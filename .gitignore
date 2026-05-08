@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+.pdm-python
+.venv/
+*.egg
+.ken
+.sync-state.json
