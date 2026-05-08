@@ -23,10 +23,14 @@ from pathlib import Path
 
 @click.group()
 @click.option("--config", "config_file", help="Path to a .jeff config file.")
+@click.option("--verbose", "-v", is_flag=True, help="Enable debug logging.")
 @click.version_option(__version__, prog_name="jeff")
 @click.pass_context
-def cli(ctx: click.Context, config_file: str | None) -> None:
+def cli(ctx: click.Context, config_file: str | None, verbose: bool) -> None:
     """Jeff — sync CardDAV contacts to Markdown."""
+    from jeff.log import setup
+
+    setup(verbose=verbose)
     ctx.ensure_object(dict)
     cfg = load_config(config_file)
     errors = cfg.validate()

@@ -15,6 +15,10 @@ from typing import Any
 import requests
 from lxml import etree
 
+from jeff.log import get_logger
+
+_log = get_logger("carddav")
+
 # XML namespaces used in CardDAV / WebDAV.
 DAV = "DAV:"
 CARDDAV = "urn:ietf:params:xml:ns:carddav"
@@ -103,6 +107,7 @@ class CardDAVClient:
             "</d:prop>"
             "</d:propfind>"
         )
+        _log.debug("PROPFIND %s (discover addressbooks)", self._config.base_url)
         resp = self._request("PROPFIND", self._config.base_url, body, depth="1")
         tree = etree.fromstring(resp.content)
         books: list[dict[str, str]] = []
@@ -167,6 +172,7 @@ class CardDAVClient:
         """
         if not hrefs:
             return []
+        _log.debug("Multiget %d contact(s)", len(hrefs))
         href_xml = "".join(f"<d:href>{h}</d:href>" for h in hrefs)
         body = (
             '<?xml version="1.0" encoding="utf-8"?>'
@@ -209,8 +215,9 @@ class CardDAVClient:
         """
         ctag = self.get_ctag(addressbook_href)
         if ctag is not None and ctag == state.ctag:
-            # Nothing changed.
+            _log.debug("CTag unchanged (%s), skipping sync", ctag)
             return [], [], state
+        _log.debug("CTag changed: %s → %s", state.ctag, ctag)
 
         current = self.list_contacts(addressbook_href)
         old = state.contacts
@@ -247,6 +254,7 @@ class CardDAVClient:
         Returns the new etag on success, or None on conflict (412).
         """
         url = self._absolute(href)
+        _log.debug("PUT %s (If-Match: %s)", href, etag)
         headers = {
             "Content-Type": "text/vcard",
             "If-Match": f'"{etag}"',

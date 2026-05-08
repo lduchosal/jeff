@@ -11,6 +11,10 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
+from jeff.log import get_logger
+
+_log = get_logger("publish")
+
 import yaml
 from jinja2 import Environment, FileSystemLoader
 
@@ -68,6 +72,7 @@ def build_site(
         Number of contact pages generated.
     """
     contacts = _load_contacts(content_dir)
+    _log.debug("Loaded %d contact(s) from %s", len(contacts), content_dir)
 
     # Set up Jinja2 with bundled templates.
     template_dir = resources.files("jeff").joinpath("templates")
@@ -106,6 +111,7 @@ def build_site(
         # Wrap dict in a SimpleNamespace-like object for template dot access.
         html = contact_tpl.render(contact=_DotDict(contact))
         slug = contact.get("slug", "contact")
+        _log.debug("Render %s.html", slug)
         (contacts_out / f"{slug}.html").write_text(html, encoding="utf-8")
 
     # Render index.

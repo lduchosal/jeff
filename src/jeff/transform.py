@@ -13,6 +13,10 @@ from typing import Any
 
 import vobject
 
+from jeff.log import get_logger
+
+_log = get_logger("transform")
+
 from jeff.carddav import Contact
 
 
@@ -320,6 +324,7 @@ def contact_to_markdown(
     """
     data = parse_vcard(contact.vcard_raw)
     slug = data.get("slug", "contact")
+    _log.debug("Transform %s → %s.md", data.get("name", "?"), slug)
 
     # Extract photo if present.
     photo_path = extract_photo(data, slug, photo_dir)
