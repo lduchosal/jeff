@@ -11,4 +11,5 @@ htmlcov/
 .venv/
 *.egg
 .ken
+.jeff
 .sync-state.json
