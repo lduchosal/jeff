@@ -1,0 +1,200 @@
+{{ define "main" }}
+<article class="contact-page">
+
+  {{/* ===== Main Content ===== */}}
+  <div class="contact-main">
+
+    {{/* Header: avatar + name + org */}}
+    <header class="contact-header">
+      {{ with .Params.photo }}
+        <img class="contact-avatar" src="{{ . }}" alt="">
+      {{ else }}
+        <div class="contact-avatar--placeholder" aria-hidden="true">
+          {{ substr .Title 0 1 }}
+        </div>
+      {{ end }}
+      <div class="contact-header__info">
+        <h1 class="contact-name">{{ .Title }}</h1>
+        {{ with .Params.job_title }}
+          <p class="contact-title">{{ . }}</p>
+        {{ end }}
+        {{ with .Params.organization }}
+          <p class="contact-org">{{ . }}</p>
+        {{ end }}
+      </div>
+    </header>
+
+    {{/* Follow-up banner */}}
+    {{ with .Params.next_followup }}
+      {{ $overdue := lt (time .) now }}
+      <div class="followup-banner{{ if $overdue }} followup-banner--overdue{{ end }}">
+        <span class="followup-banner__icon" aria-hidden="true">
+          {{ if $overdue }}&#9888;{{ else }}&#128197;{{ end }}
+        </span>
+        <span class="followup-banner__text">
+          <strong>Next follow-up:</strong> {{ dateFormat "January 2, 2006" . }}
+          {{ if $overdue }} &mdash; overdue{{ end }}
+        </span>
+      </div>
+    {{ end }}
+
+    {{/* Contact Details */}}
+    <section class="section">
+      <h2 class="section__title">Contact Details</h2>
+      <div class="field-list">
+        {{ with .Params.email }}
+        <div class="field">
+          <span class="field__label">Email</span>
+          <span class="field__value"><a href="mailto:{{ . }}">{{ . }}</a></span>
+        </div>
+        {{ end }}
+        {{ with .Params.phone }}
+        <div class="field">
+          <span class="field__label">Phone</span>
+          <span class="field__value"><a href="tel:{{ . }}">{{ . }}</a></span>
+        </div>
+        {{ end }}
+        {{ range .Params.addresses }}
+        <div class="field">
+          <span class="field__label">{{ with .type }}{{ . | title }}{{ else }}Address{{ end }}</span>
+          <span class="field__value">
+            {{ with .street }}{{ . }}<br>{{ end }}
+            {{ with .postal_code }}{{ . }} {{ end }}{{ with .city }}{{ . }}{{ end }}
+            {{ with .country }}<br>{{ . }}{{ end }}
+          </span>
+        </div>
+        {{ end }}
+        {{ range .Params.urls }}
+        <div class="field">
+          <span class="field__label">{{ with .type }}{{ . | title }}{{ else }}URL{{ end }}</span>
+          <span class="field__value"><a href="{{ .url }}">{{ .url }}</a></span>
+        </div>
+        {{ end }}
+      </div>
+    </section>
+
+    {{/* Tags & Score */}}
+    {{ if or .Params.tags .Params.lead_score }}
+    <section class="section">
+      <h2 class="section__title">CRM</h2>
+      <div class="field-list">
+        {{ with .Params.tags }}
+        <div class="field">
+          <span class="field__label">Tags</span>
+          <span class="field__value">
+            <div class="tag-list">
+              {{ range . }}
+                <span class="tag">{{ . }}</span>
+              {{ end }}
+            </div>
+          </span>
+        </div>
+        {{ end }}
+        {{ with .Params.lead_score }}
+        <div class="field">
+          <span class="field__label">Score</span>
+          <span class="field__value">
+            {{ $level := "low" }}
+            {{ if ge . 70 }}{{ $level = "high" }}
+            {{ else if ge . 40 }}{{ $level = "medium" }}{{ end }}
+            <span class="score score--{{ $level }}">
+              <span class="score__dot"></span>
+              {{ . }}
+            </span>
+          </span>
+        </div>
+        {{ end }}
+      </div>
+    </section>
+    {{ end }}
+
+    {{/* Interaction Timeline */}}
+    {{ with .Params.interactions }}
+    <section class="section">
+      <h2 class="section__title">Interactions</h2>
+      <div class="timeline">
+        {{ range . }}
+        <div class="timeline__item">
+          <div class="timeline__dot"></div>
+          <time class="timeline__date" datetime="{{ .date }}">
+            {{ dateFormat "Jan 2, 2006" .date }}
+          </time>
+          <div class="timeline__content">
+            <strong>{{ .type }}</strong> &mdash; {{ .summary }}
+          </div>
+        </div>
+        {{ end }}
+      </div>
+    </section>
+    {{ end }}
+
+    {{/* Page body content (markdown notes) */}}
+    {{ with .Content }}
+    <section class="section">
+      <h2 class="section__title">Notes</h2>
+      <div class="prose">{{ . }}</div>
+    </section>
+    {{ end }}
+
+  </div>
+
+  {{/* ===== Sidebar ===== */}}
+  <aside class="contact-sidebar">
+
+    {{/* Positions */}}
+    {{ with .Params.positions }}
+    <section class="section">
+      <h2 class="section__title">Positions</h2>
+      {{ range . }}
+      <div class="related-contact">
+        <div class="related-contact__info">
+          <div class="related-contact__name">{{ .title }}</div>
+          <div class="related-contact__role">{{ .org }}</div>
+        </div>
+      </div>
+      {{ end }}
+    </section>
+    {{ end }}
+
+    {{/* Related Contacts */}}
+    {{ with .Params.links }}
+    <section class="section">
+      <h2 class="section__title">Related</h2>
+      {{ range . }}
+        {{ with site.GetPage (printf "/contacts/%s" .person) }}
+        <a class="related-contact" href="{{ .RelPermalink }}">
+          {{ with .Params.photo }}
+            <img class="related-contact__avatar" src="{{ . }}" alt="">
+          {{ else }}
+            <div class="related-contact__avatar" aria-hidden="true"></div>
+          {{ end }}
+          <div class="related-contact__info">
+            <div class="related-contact__name">{{ .Title }}</div>
+            {{ with .Params.job_title }}
+              <div class="related-contact__role">{{ . }}</div>
+            {{ end }}
+          </div>
+        </a>
+        {{ end }}
+      {{ end }}
+    </section>
+    {{ end }}
+
+    {{/* Social -->}}
+    {{ with .Params.social }}
+    <section class="section">
+      <h2 class="section__title">Social</h2>
+      {{ range . }}
+      <a class="related-contact" href="{{ .url }}" target="_blank" rel="noopener">
+        <div class="related-contact__info">
+          <div class="related-contact__name">{{ .platform }}</div>
+        </div>
+      </a>
+      {{ end }}
+    </section>
+    {{ end }}
+
+  </aside>
+
+</article>
+{{ end }}
