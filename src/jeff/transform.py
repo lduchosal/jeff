@@ -1,7 +1,7 @@
 """Transform vCard data to Markdown with YAML frontmatter.
 
-Parses vCard strings via ``vobject``, extracts fields into a dict,
-and renders Hugo-compatible Markdown files.
+Parses vCard strings via ``vobject``, extracts fields into a dict, and renders Hugo-
+compatible Markdown files.
 """
 
 from __future__ import annotations
@@ -13,11 +13,10 @@ from typing import Any
 
 import vobject
 
+from jeff.carddav import Contact
 from jeff.log import get_logger
 
 _log = get_logger("transform")
-
-from jeff.carddav import Contact
 
 
 def slugify(text: str) -> str:
@@ -39,8 +38,8 @@ def slugify(text: str) -> str:
 def parse_vcard(vcard_raw: str) -> dict[str, Any]:
     """Parse a vCard string into a flat dict for YAML frontmatter.
 
-    Extracts all standard fields. Missing fields are omitted (not set
-    to None) so the frontmatter stays clean.
+    Extracts all standard fields. Missing fields are omitted (not set to None) so the
+    frontmatter stays clean.
     """
     vc = vobject.readOne(vcard_raw)
     data: dict[str, Any] = {}
@@ -234,9 +233,19 @@ def render_frontmatter(data: dict[str, Any]) -> str:
 
     # Scalar fields in order.
     scalars = [
-        "uid", "name", "slug", "name_family", "name_given",
-        "name_prefix", "name_suffix", "email", "phone",
-        "birthday", "note", "photo", "rev",
+        "uid",
+        "name",
+        "slug",
+        "name_family",
+        "name_given",
+        "name_prefix",
+        "name_suffix",
+        "email",
+        "phone",
+        "birthday",
+        "note",
+        "photo",
+        "rev",
     ]
     for key in scalars:
         if key in data:
@@ -257,8 +266,7 @@ def render_frontmatter(data: dict[str, Any]) -> str:
     ]
     for key, label in list_fields:
         if key in data:
-            lines.append(f"{label}:")
-            lines.append(_yaml_list_of_dicts(data[key]))
+            lines.extend((f"{label}:", _yaml_list_of_dicts(data[key])))
 
     lines.append("---")
     return "\n".join(lines)

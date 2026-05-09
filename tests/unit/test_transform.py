@@ -4,12 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from jeff.carddav import Contact
 from jeff.transform import (
     contact_to_markdown,
-    extract_photo,
     parse_vcard,
     render_frontmatter,
     slugify,

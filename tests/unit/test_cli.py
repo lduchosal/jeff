@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
 
 from jeff.carddav import Contact, SyncState
 from jeff.cli import cli
-
 
 SAMPLE_VCARD = """\
 BEGIN:VCARD
@@ -46,15 +44,13 @@ def jeff_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 class TestSyncCommand:
     """Tests for the sync command."""
 
-    def test_sync_up_to_date(
-        self, runner: CliRunner, jeff_env: Path
-    ) -> None:
+    def test_sync_up_to_date(self, runner: CliRunner, jeff_env: Path) -> None:
         """Reports 'up to date' when nothing changed."""
-        books = [{"href": "/dav.php/addressbooks/u/default/", "displayname": "Contacts"}]
+        books = [
+            {"href": "/dav.php/addressbooks/u/default/", "displayname": "Contacts"}
+        ]
         with (
-            patch(
-                "jeff.cli.CardDAVClient.discover_addressbooks", return_value=books
-            ),
+            patch("jeff.cli.CardDAVClient.discover_addressbooks", return_value=books),
             patch(
                 "jeff.cli.CardDAVClient.sync",
                 return_value=([], [], SyncState(ctag="c1")),
@@ -64,11 +60,11 @@ class TestSyncCommand:
         assert result.exit_code == 0
         assert "Already up to date" in result.output
 
-    def test_sync_writes_contacts(
-        self, runner: CliRunner, jeff_env: Path
-    ) -> None:
+    def test_sync_writes_contacts(self, runner: CliRunner, jeff_env: Path) -> None:
         """Creates markdown files for new contacts."""
-        books = [{"href": "/dav.php/addressbooks/u/default/", "displayname": "Contacts"}]
+        books = [
+            {"href": "/dav.php/addressbooks/u/default/", "displayname": "Contacts"}
+        ]
         contact = Contact(
             href="/dav.php/addressbooks/u/default/test.vcf",
             etag="etag-1",
@@ -76,14 +72,10 @@ class TestSyncCommand:
         )
         new_state = SyncState(
             ctag="c2",
-            contacts={
-                "/dav.php/addressbooks/u/default/test.vcf": {"etag": "etag-1"}
-            },
+            contacts={"/dav.php/addressbooks/u/default/test.vcf": {"etag": "etag-1"}},
         )
         with (
-            patch(
-                "jeff.cli.CardDAVClient.discover_addressbooks", return_value=books
-            ),
+            patch("jeff.cli.CardDAVClient.discover_addressbooks", return_value=books),
             patch(
                 "jeff.cli.CardDAVClient.sync",
                 return_value=([contact], [], new_state),
@@ -103,7 +95,11 @@ class TestSyncCommand:
     ) -> None:
         """Exits with error when no .jeff config exists."""
         monkeypatch.chdir(tmp_path)
-        for key in ("JEFF_CARDDAV_URL", "JEFF_CARDDAV_USERNAME", "JEFF_CARDDAV_PASSWORD"):
+        for key in (
+            "JEFF_CARDDAV_URL",
+            "JEFF_CARDDAV_USERNAME",
+            "JEFF_CARDDAV_PASSWORD",
+        ):
             monkeypatch.delenv(key, raising=False)
         result = runner.invoke(cli, ["sync"])
         assert result.exit_code != 0

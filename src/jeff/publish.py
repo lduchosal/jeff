@@ -1,7 +1,7 @@
 """Build static HTML site from Markdown contact files.
 
-Reads ``.md`` files with YAML frontmatter from ``content_dir``, renders
-them through Jinja2 templates, and writes the result to ``output_dir``.
+Reads ``.md`` files with YAML frontmatter from ``content_dir``, renders them through
+Jinja2 templates, and writes the result to ``output_dir``.
 """
 
 from __future__ import annotations
@@ -11,19 +11,18 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
+import yaml
+from jinja2 import Environment, FileSystemLoader
+
 from jeff.log import get_logger
 
 _log = get_logger("publish")
-
-import yaml
-from jinja2 import Environment, FileSystemLoader
 
 
 def _parse_frontmatter(path: Path) -> dict[str, Any]:
     """Parse YAML frontmatter from a Markdown file.
 
-    Returns the frontmatter as a dict. Ignores body content after
-    the closing ``---``.
+    Returns the frontmatter as a dict. Ignores body content after the closing ``---``.
     """
     text = path.read_text(encoding="utf-8")
     if not text.startswith("---"):
@@ -94,8 +93,6 @@ def build_site(
     if css_path and css_path.is_file():
         shutil.copy2(css_path, css_out / "contact.css")
     else:
-        # Use bundled CSS from doc/ui if available.
-        bundled = resources.files("jeff").joinpath("templates")
         # Fallback: just create an empty placeholder.
         (css_out / "contact.css").write_text("/* no css found */", encoding="utf-8")
 

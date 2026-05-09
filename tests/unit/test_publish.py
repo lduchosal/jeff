@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from jeff.publish import _parse_frontmatter, build_site
-
 
 SAMPLE_MD = """\
 ---

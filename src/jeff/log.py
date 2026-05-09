@@ -1,7 +1,7 @@
 """Logging setup for jeff.
 
-Provides a single ``get_logger`` function that returns a stdlib logger.
-Verbose mode switches from WARNING to DEBUG.
+Provides a single ``get_logger`` function that returns a stdlib logger. Verbose mode
+switches from WARNING to DEBUG.
 """
 
 from __future__ import annotations

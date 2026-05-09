@@ -1,8 +1,8 @@
 """Jeff configuration.
 
-Resolves config in this order: env vars (JEFF_*) > ``.jeff`` file
-(searched upwards from cwd) > defaults. The ``.jeff`` file uses the
-same ``key=value`` format as kenboard's ``.ken``.
+Resolves config in this order: env vars (JEFF_*) > ``.jeff`` file (searched upwards from
+cwd) > defaults. The ``.jeff`` file uses the same ``key=value`` format as kenboard's
+``.ken``.
 """
 
 from __future__ import annotations
@@ -104,8 +104,7 @@ def load_config(config_path: str | None = None) -> JeffConfig:
 
     return JeffConfig(
         carddav_url=(
-            os.environ.get("JEFF_CARDDAV_URL")
-            or file_data.get("carddav_url", "")
+            os.environ.get("JEFF_CARDDAV_URL") or file_data.get("carddav_url", "")
         ),
         carddav_username=(
             os.environ.get("JEFF_CARDDAV_USERNAME")
@@ -128,8 +127,7 @@ def load_config(config_path: str | None = None) -> JeffConfig:
             or file_data.get("photo_dir", "static/photos")
         ),
         publish_url=(
-            os.environ.get("JEFF_PUBLISH_URL")
-            or file_data.get("publish_url", "")
+            os.environ.get("JEFF_PUBLISH_URL") or file_data.get("publish_url", "")
         ),
         jeff_file=jeff_path,
     )

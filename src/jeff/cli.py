@@ -10,6 +10,7 @@ Usage::
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import click
 
@@ -17,8 +18,6 @@ from jeff import __version__
 from jeff.carddav import CardDAVClient, CardDAVConfig, SyncState
 from jeff.config import load_config
 from jeff.transform import contact_to_markdown, parse_vcard
-
-from pathlib import Path
 
 
 @click.group()
@@ -118,9 +117,7 @@ def sync(ctx: click.Context, full: bool) -> None:
             new_vcard = inject_crm_url(contact.vcard_raw, profile_url)
             if new_vcard is None:
                 continue  # URL already present.
-            new_etag = client.put_contact(
-                contact.href, new_vcard, contact.etag
-            )
+            new_etag = client.put_contact(contact.href, new_vcard, contact.etag)
             if new_etag:
                 url_count += 1
                 # Update state with new etag (PUT changes it).

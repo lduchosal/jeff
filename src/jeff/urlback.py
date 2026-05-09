@@ -1,21 +1,18 @@
 """Write CRM profile URL back into vCard on CardDAV server.
 
-Adds an ``item99.URL`` + ``item99.X-ABLabel:Profil CRM`` pair to the
-vCard so the link is visible and clickable in Apple Contacts / iOS.
-See task #273 for the design decision.
+Adds an ``item99.URL`` + ``item99.X-ABLabel:Profil CRM`` pair to the vCard so the link
+is visible and clickable in Apple Contacts / iOS. See task #273 for the design decision.
 """
 
 from __future__ import annotations
-
-import re
 
 
 def inject_crm_url(vcard_raw: str, profile_url: str) -> str | None:
     """Inject a CRM profile URL into a vCard string.
 
-    Returns the modified vCard, or None if the URL is already present.
-    Uses the ``item99`` property group with ``X-ABLabel:Profil CRM``
-    so it appears as a labeled link in Apple Contacts.
+    Returns the modified vCard, or None if the URL is already present. Uses the
+    ``item99`` property group with ``X-ABLabel:Profil CRM`` so it appears as a labeled
+    link in Apple Contacts.
     """
     # Check if the URL is already there.
     if profile_url in vcard_raw:
@@ -23,14 +20,15 @@ def inject_crm_url(vcard_raw: str, profile_url: str) -> str | None:
 
     # Remove any existing item99 group (in case of a stale URL).
     lines = vcard_raw.splitlines()
-    lines = [l for l in lines if not l.startswith("item99.")]
+    lines = [line for line in lines if not line.startswith("item99.")]
 
     # Insert before END:VCARD.
     new_lines: list[str] = []
     for line in lines:
         if line.strip().upper() == "END:VCARD":
-            new_lines.append(f"item99.URL:{profile_url}")
-            new_lines.append("item99.X-ABLabel:Profil CRM")
+            new_lines.extend(
+                (f"item99.URL:{profile_url}", "item99.X-ABLabel:Profil CRM")
+            )
         new_lines.append(line)
 
     return "\n".join(new_lines)

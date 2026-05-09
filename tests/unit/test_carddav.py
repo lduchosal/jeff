@@ -1,18 +1,14 @@
 """Unit tests for the CardDAV client.
 
-HTTP is mocked at the ``requests.Session.request`` boundary so no real
-server is needed. Tests verify XML parsing, change detection, and sync
-state management.
+HTTP is mocked at the ``requests.Session.request`` boundary so no real server is needed.
+Tests verify XML parsing, change detection, and sync state management.
 """
 
 from __future__ import annotations
 
-import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from jeff.carddav import CardDAVClient, CardDAVConfig, Contact, SyncState
+from jeff.carddav import CardDAVClient, CardDAVConfig, SyncState
 
 # -- Fixtures ----------------------------------------------------------------
 
@@ -156,9 +152,7 @@ MULTIGET_RESPONSE = """\
       </d:prop>
     </d:propstat>
   </d:response>
-</d:multistatus>""".format(
-    vcard1=SAMPLE_VCARD, vcard2=SAMPLE_VCARD_2
-)
+</d:multistatus>""".format(vcard1=SAMPLE_VCARD, vcard2=SAMPLE_VCARD_2)
 
 
 # -- SyncState tests ----------------------------------------------------------
@@ -297,9 +291,7 @@ class TestSync:
             _mock_response(PROPFIND_CONTACTS),
             _mock_response(MULTIGET_RESPONSE),
         ]
-        with patch.object(
-            client._session, "request", side_effect=responses
-        ):
+        with patch.object(client._session, "request", side_effect=responses):
             updated, deleted, new_state = client.sync(
                 "/dav.php/addressbooks/user/default/", state
             )
@@ -324,9 +316,7 @@ class TestSync:
             _mock_response(PROPFIND_CONTACTS),
             # No changed hrefs since etags match.
         ]
-        with patch.object(
-            client._session, "request", side_effect=responses
-        ):
+        with patch.object(client._session, "request", side_effect=responses):
             updated, deleted, new_state = client.sync(
                 "/dav.php/addressbooks/user/default/", state
             )
@@ -358,17 +348,13 @@ class TestSync:
       </d:prop>
     </d:propstat>
   </d:response>
-</d:multistatus>""".format(
-            vcard=SAMPLE_VCARD_2
-        )
+</d:multistatus>""".format(vcard=SAMPLE_VCARD_2)
         responses = [
             _mock_response(PROPFIND_CTAG),
             _mock_response(PROPFIND_CONTACTS),
             _mock_response(multiget_single),
         ]
-        with patch.object(
-            client._session, "request", side_effect=responses
-        ):
+        with patch.object(client._session, "request", side_effect=responses):
             updated, deleted, new_state = client.sync(
                 "/dav.php/addressbooks/user/default/", state
             )

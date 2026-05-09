@@ -1,8 +1,7 @@
 """CardDAV client for Baikal.
 
-Minimal, no-bloat CardDAV client using ``requests`` + ``lxml``.
-Supports discovery, contact listing, batch fetch, and change detection
-via sync-token / ctag / etags.
+Minimal, no-bloat CardDAV client using ``requests`` + ``lxml``. Supports discovery,
+contact listing, batch fetch, and change detection via sync-token / ctag / etags.
 """
 
 from __future__ import annotations
@@ -83,11 +82,12 @@ class CardDAVConfig:
 class CardDAVClient:
     """Minimal CardDAV client for Baikal.
 
-    Talks to the server using raw WebDAV/CardDAV XML requests.
-    No dependency on vdirsyncer internals.
+    Talks to the server using raw WebDAV/CardDAV XML requests. No dependency on
+    vdirsyncer internals.
     """
 
     def __init__(self, config: CardDAVConfig) -> None:
+        """Initialize the CardDAV client."""
         self._config = config
         self._session = requests.Session()
         self._session.auth = (config.username, config.password)
@@ -132,7 +132,7 @@ class CardDAVClient:
         url = self._absolute(addressbook_href)
         resp = self._request("PROPFIND", url, body, depth="0")
         tree = etree.fromstring(resp.content)
-        ctag: str | None = tree.findtext(".//cs:getctag", None, _NS)
+        ctag: str | None = tree.findtext(".//cs:getctag", None, _NS)  # noqa: FURB184
         return ctag
 
     def list_contacts(self, addressbook_href: str) -> dict[str, str]:
@@ -164,9 +164,7 @@ class CardDAVClient:
                 contacts[href] = etag
         return contacts
 
-    def fetch_contacts(
-        self, addressbook_href: str, hrefs: list[str]
-    ) -> list[Contact]:
+    def fetch_contacts(self, addressbook_href: str, hrefs: list[str]) -> list[Contact]:
         """Fetch multiple contacts in a single request (multiget REPORT).
 
         Returns a list of ``Contact`` objects with raw vCard data.
@@ -210,9 +208,8 @@ class CardDAVClient:
     ) -> tuple[list[Contact], list[str], SyncState]:
         """Incremental sync: fetch only changed contacts.
 
-        Returns ``(new_or_updated, deleted_hrefs, new_state)``.
-        Uses ctag for collection-level change detection, then diffs
-        etags to find individual changes.
+        Returns ``(new_or_updated, deleted_hrefs, new_state)``. Uses ctag for
+        collection-level change detection, then diffs etags to find individual changes.
         """
         ctag = self.get_ctag(addressbook_href)
         if ctag is not None and ctag == state.ctag:
@@ -251,8 +248,8 @@ class CardDAVClient:
     def put_contact(self, href: str, vcard_raw: str, etag: str) -> str | None:
         """Update a contact on the server via PUT.
 
-        Uses ``If-Match`` with the given etag for optimistic locking.
-        Returns the new etag on success, or None on conflict (412).
+        Uses ``If-Match`` with the given etag for optimistic locking. Returns the new
+        etag on success, or None on conflict (412).
         """
         url = self._absolute(href)
         _log.debug("PUT %s (If-Match: %s)", href, etag)

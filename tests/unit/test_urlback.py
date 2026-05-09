@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from jeff.urlback import build_profile_url, inject_crm_url
 
-
 SAMPLE_VCARD = """\
 BEGIN:VCARD
 VERSION:3.0
@@ -31,7 +30,9 @@ class TestInjectCrmUrl:
 
     def test_injects_url(self) -> None:
         """Adds item99.URL and X-ABLabel before END:VCARD."""
-        result = inject_crm_url(SAMPLE_VCARD, "https://crm.example.com/contacts/jean-dupont.html")
+        result = inject_crm_url(
+            SAMPLE_VCARD, "https://crm.example.com/contacts/jean-dupont.html"
+        )
         assert result is not None
         assert "item99.URL:https://crm.example.com/contacts/jean-dupont.html" in result
         assert "item99.X-ABLabel:Profil CRM" in result
@@ -51,7 +52,9 @@ class TestInjectCrmUrl:
             "END:VCARD",
             "item99.URL:https://old.example.com/old\nitem99.X-ABLabel:Old\nEND:VCARD",
         )
-        result = inject_crm_url(vcard_with_old, "https://new.example.com/contacts/jean.html")
+        result = inject_crm_url(
+            vcard_with_old, "https://new.example.com/contacts/jean.html"
+        )
         assert result is not None
         assert "old.example.com" not in result
         assert "https://new.example.com/contacts/jean.html" in result

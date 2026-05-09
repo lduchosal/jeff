@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from jeff.config import JeffConfig, _parse_jeff_file, load_config
 
 
@@ -42,7 +40,11 @@ class TestLoadConfig:
     def test_loads_from_file(self, tmp_path: Path, monkeypatch: object) -> None:
         """Loads config from a .jeff file."""
         monkeypatch.chdir(tmp_path)  # type: ignore[attr-defined]
-        for key in ("JEFF_CARDDAV_URL", "JEFF_CARDDAV_USERNAME", "JEFF_CARDDAV_PASSWORD"):
+        for key in (
+            "JEFF_CARDDAV_URL",
+            "JEFF_CARDDAV_USERNAME",
+            "JEFF_CARDDAV_PASSWORD",
+        ):
             monkeypatch.delenv(key, raising=False)  # type: ignore[attr-defined]
         f = tmp_path / ".jeff"
         f.write_text(
@@ -69,7 +71,11 @@ class TestLoadConfig:
     def test_defaults_when_no_file(self, tmp_path: Path, monkeypatch: object) -> None:
         """Returns defaults when no .jeff file and no env vars."""
         monkeypatch.chdir(tmp_path)  # type: ignore[attr-defined]
-        for key in ("JEFF_CARDDAV_URL", "JEFF_CARDDAV_USERNAME", "JEFF_CARDDAV_PASSWORD"):
+        for key in (
+            "JEFF_CARDDAV_URL",
+            "JEFF_CARDDAV_USERNAME",
+            "JEFF_CARDDAV_PASSWORD",
+        ):
             monkeypatch.delenv(key, raising=False)  # type: ignore[attr-defined]
         cfg = load_config()
         assert cfg.carddav_url == ""
@@ -77,7 +83,11 @@ class TestLoadConfig:
 
     def test_explicit_path(self, tmp_path: Path, monkeypatch: object) -> None:
         """Loads from an explicit config file path."""
-        for key in ("JEFF_CARDDAV_URL", "JEFF_CARDDAV_USERNAME", "JEFF_CARDDAV_PASSWORD"):
+        for key in (
+            "JEFF_CARDDAV_URL",
+            "JEFF_CARDDAV_USERNAME",
+            "JEFF_CARDDAV_PASSWORD",
+        ):
             monkeypatch.delenv(key, raising=False)  # type: ignore[attr-defined]
         f = tmp_path / "custom.jeff"
         f.write_text("carddav_url=https://custom.example.com\n")
