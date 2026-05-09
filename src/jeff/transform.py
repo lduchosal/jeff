@@ -259,6 +259,10 @@ def render_frontmatter(data: dict[str, Any]) -> str:
         tags_str = ", ".join(data["tags"])
         lines.append(f"tags: [{tags_str}]")
 
+    # Sorting/triage fields (preserved from existing frontmatter if present).
+    for key in ("status", "relation", "frequence", "priorite"):
+        lines.append(f"{key}: {_yaml_value(data[key]) if data.get(key) else ''}")
+
     # List-of-dict fields.
     list_fields = [
         ("emails", "emails"),
@@ -337,6 +341,24 @@ def contact_to_markdown(
     slug = data.get("slug", "contact")
     _log.debug("Transform %s → %s.md", data.get("name", "?"), slug)
 
+    # Preserve hand-edited triage fields from existing frontmatter.
+    content_dir.mkdir(parents=True, exist_ok=True)
+    md_path = content_dir / f"{slug}.md"
+    _triage_keys = ("status", "relation", "frequence", "priorite")
+    if md_path.exists():
+        import yaml
+
+        existing = md_path.read_text(encoding="utf-8")
+        lines_ex = existing.split("\n")
+        if lines_ex and lines_ex[0].strip() == "---":
+            for idx, line in enumerate(lines_ex[1:], start=1):
+                if line.strip() == "---":
+                    old = yaml.safe_load("\n".join(lines_ex[1:idx])) or {}
+                    for k in _triage_keys:
+                        if old.get(k):
+                            data[k] = old[k]
+                    break
+
     # Extract photo if present.
     photo_path = extract_photo(data, slug, photo_dir)
     if photo_path:
@@ -345,7 +367,5 @@ def contact_to_markdown(
     data.pop("_photo_data", None)
 
     frontmatter = render_frontmatter(data)
-    content_dir.mkdir(parents=True, exist_ok=True)
-    md_path = content_dir / f"{slug}.md"
     md_path.write_text(f"{frontmatter}\n", encoding="utf-8")
     return md_path

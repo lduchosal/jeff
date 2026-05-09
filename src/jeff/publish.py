@@ -36,15 +36,28 @@ def _parse_frontmatter(path: Path) -> dict[str, Any]:
     return {}
 
 
+_PRIORITY_ORDER = {"haute": 0, "moyenne": 1, "basse": 2, "": 3}
+
+
 def _load_contacts(content_dir: Path) -> list[dict[str, Any]]:
-    """Load all contact .md files and return sorted list of dicts."""
+    """Load active contact .md files, sorted by priority then name."""
     contacts: list[dict[str, Any]] = []
     if not content_dir.is_dir():
         return contacts
     for md in sorted(content_dir.glob("*.md")):
         data = _parse_frontmatter(md)
-        if data.get("name"):
-            contacts.append(data)
+        if not data.get("name"):
+            continue
+        # Skip archived contacts.
+        if data.get("status") == "archivé":
+            continue
+        contacts.append(data)
+    contacts.sort(
+        key=lambda c: (
+            _PRIORITY_ORDER.get(c.get("priorite", ""), 3),
+            c.get("name", ""),
+        )
+    )
     return contacts
 
 
