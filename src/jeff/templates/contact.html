@@ -115,6 +115,48 @@
     </section>
     {% endif %}
 
+    {% if contact.pere or contact.mere or contact.conjoint or contact.enfants or contact.freres_soeurs %}
+    <section class="section">
+      <h2 class="section__title">Famille</h2>
+      <div class="field-list">
+        {% if contact.pere %}
+        <div class="field field--stacked">
+          <span class="field__label">Père</span>
+          <span class="field__value"><a href="{{ contact.pere }}.html">{{ contact.pere }}</a></span>
+        </div>
+        {% endif %}
+        {% if contact.mere %}
+        <div class="field field--stacked">
+          <span class="field__label">Mère</span>
+          <span class="field__value"><a href="{{ contact.mere }}.html">{{ contact.mere }}</a></span>
+        </div>
+        {% endif %}
+        {% if contact.conjoint %}
+        <div class="field field--stacked">
+          <span class="field__label">Conjoint(e)</span>
+          <span class="field__value"><a href="{{ contact.conjoint }}.html">{{ contact.conjoint }}</a></span>
+        </div>
+        {% endif %}
+        {% if contact.freres_soeurs %}
+        <div class="field field--stacked">
+          <span class="field__label">Frères / Sœurs</span>
+          <span class="field__value">
+            {% for slug in contact.freres_soeurs %}<a href="{{ slug }}.html">{{ slug }}</a>{{ ', ' if not loop.last }}{% endfor %}
+          </span>
+        </div>
+        {% endif %}
+        {% if contact.enfants %}
+        <div class="field field--stacked">
+          <span class="field__label">Enfants</span>
+          <span class="field__value">
+            {% for slug in contact.enfants %}<a href="{{ slug }}.html">{{ slug }}</a>{{ ', ' if not loop.last }}{% endfor %}
+          </span>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+
     {% if contact.urls %}
     <section class="section">
       <h2 class="section__title">Liens</h2>

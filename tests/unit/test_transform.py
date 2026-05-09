@@ -268,3 +268,38 @@ class TestContactToMarkdown:
         assert "relation: ami" in text
         assert "frequence: mensuel" in text
         assert "priorite: haute" in text
+
+    def test_resync_preserves_family_links(self, tmp_path: Path) -> None:
+        """Family link fields survive a re-sync."""
+        from jeff.triage import save_triage
+
+        contact = Contact(
+            href="/contact.vcf",
+            etag="etag-1",
+            vcard_raw=VCARD_FULL,
+        )
+        content_dir = tmp_path / "content" / "contacts"
+        photo_dir = tmp_path / "static" / "photos"
+
+        # 1. First sync.
+        path = contact_to_markdown(contact, content_dir, photo_dir)
+        assert "pere:" in path.read_text()
+
+        # 2. Edit family links by hand.
+        save_triage(path, {
+            "pere": "jacques-dupont",
+            "conjoint": "marie-dupont",
+        })
+
+        # 3. Re-sync.
+        contact_v2 = Contact(
+            href="/contact.vcf",
+            etag="etag-2",
+            vcard_raw=VCARD_FULL,
+        )
+        path = contact_to_markdown(contact_v2, content_dir, photo_dir)
+
+        # 4. Family links must be preserved.
+        text = path.read_text()
+        assert "pere: jacques-dupont" in text
+        assert "conjoint: marie-dupont" in text

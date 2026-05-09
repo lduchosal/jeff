@@ -264,6 +264,17 @@ def render_frontmatter(data: dict[str, Any]) -> str:
     for key in ("status", "relation", "frequence", "priorite"):
         lines.append(f"{key}: {_yaml_value(data[key]) if data.get(key) else ''}")
 
+    # Family link fields (preserved from existing frontmatter).
+    for key in ("pere", "mere", "conjoint"):
+        val = data.get(key, "")
+        lines.append(f"{key}: {_yaml_value(val) if val else ''}")
+    for key in ("freres_soeurs", "enfants"):
+        val = data.get(key)
+        if val:
+            lines.append(f"{key}: [{', '.join(val)}]")
+        else:
+            lines.append(f"{key}: []")
+
     # List-of-dict fields.
     list_fields = [
         ("emails", "emails"),
@@ -345,7 +356,10 @@ def contact_to_markdown(
     # Preserve hand-edited triage fields from existing frontmatter.
     content_dir.mkdir(parents=True, exist_ok=True)
     md_path = content_dir / f"{slug}.md"
-    _triage_keys = ("status", "relation", "frequence", "priorite")
+    _triage_keys = (
+        "status", "relation", "frequence", "priorite",
+        "pere", "mere", "conjoint", "freres_soeurs", "enfants",
+    )
     if md_path.exists():
         import yaml
 
