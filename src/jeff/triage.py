@@ -18,8 +18,7 @@ _TRIAGE_KEYS = ("status", "relation", "frequence", "priorite")
 
 def load_contact(path: Path) -> dict[str, Any] | None:
     """Parse frontmatter from a contact .md file."""
-    text = path.read_text(encoding="utf-8")
-    lines = text.split("\n")  # noqa: FURB184
+    lines = path.read_text(encoding="utf-8").splitlines()
     if not lines or lines[0].strip() != "---":
         return None
     for i, line in enumerate(lines[1:], start=1):
@@ -32,8 +31,7 @@ def load_contact(path: Path) -> dict[str, Any] | None:
 
 def save_triage(path: Path, updates: dict[str, str]) -> None:
     """Update triage fields in a contact .md file."""
-    text = path.read_text(encoding="utf-8")
-    lines = text.split("\n")  # noqa: FURB184
+    lines = path.read_text(encoding="utf-8").splitlines()
 
     # Find frontmatter boundaries.
     if not lines or lines[0].strip() != "---":
