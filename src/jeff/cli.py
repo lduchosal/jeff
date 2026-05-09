@@ -249,14 +249,58 @@ def triage(ctx: click.Context, show_all: bool) -> None:
     click.echo(f"\nTriaged {triaged} contact(s) this session.")
 
 
+def _reciprocal_updates(
+    role: str, source_slug: str, target: dict,
+) -> dict[str, str]:
+    """Compute the reciprocal family link update for the target contact."""
+    reciprocal: dict[str, str] = {
+        "pere": "enfants",
+        "mere": "enfants",
+        "conjoint": "conjoint",
+        "enfants": "pere",
+        "freres_soeurs": "freres_soeurs",
+    }
+    rev = reciprocal.get(role, "")
+    if not rev:
+        return {}
+    if rev in ("enfants", "freres_soeurs"):
+        existing = target.get(rev) or []
+        if isinstance(existing, str):
+            existing = [existing]
+        if source_slug not in existing:
+            existing.append(source_slug)
+        return {rev: f"[{', '.join(existing)}]"}
+    return {rev: source_slug}
+
+
+def _show_existing_links(data: dict) -> None:
+    """Display current family links for a contact."""
+    links = []
+    if data.get("pere"):
+        links.append(f"père: {data['pere']}")
+    if data.get("mere"):
+        links.append(f"mère: {data['mere']}")
+    if data.get("conjoint"):
+        links.append(f"conjoint: {data['conjoint']}")
+    if data.get("freres_soeurs"):
+        fs = data["freres_soeurs"]
+        if isinstance(fs, list):
+            links.append(f"frères/sœurs: {', '.join(fs)}")
+    if data.get("enfants"):
+        enf = data["enfants"]
+        if isinstance(enf, list):
+            links.append(f"enfants: {', '.join(enf)}")
+    if links:
+        for lnk in links:
+            click.echo(f"    ↳ {lnk}")
+    else:
+        click.echo("    ↳ (aucun lien)")
+
+
 @cli.command()
 @click.pass_context
 def famille(ctx: click.Context) -> None:
-    """Batch-edit family links for all famille contacts.
-
-    Shows same-surname contacts numbered, then type e.g. '1f 2m 3w 4c 5b':
-    f=father m=mother w=wife/husband c=child b=brother/sister
-    """
+    """Batch-edit family links for all famille contacts."""
     from jeff.triage import load_contact, save_triage
 
     cfg = ctx.obj["cfg"]
@@ -267,12 +311,14 @@ def famille(ctx: click.Context) -> None:
         click.echo("No contacts found.", err=True)
         sys.exit(1)
 
-    # Load all contacts.
+    # Load all contacts, indexed by slug for reciprocal writes.
     all_contacts: list[dict] = []
+    by_slug: dict[str, dict] = {}
     for md in sorted(content_dir.glob("*.md")):
         data = load_contact(md)
         if data and data.get("name"):
             all_contacts.append(data)
+            by_slug[data.get("slug", "")] = data
 
     # Filter famille contacts that need editing.
     famille_contacts = [
@@ -299,27 +345,28 @@ def famille(ctx: click.Context) -> None:
         "c": "enfants", "b": "freres_soeurs",
     }
 
-    click.echo(f"\n{len(famille_contacts)} famille contacts to edit")
-    click.echo("Codes: f=father m=mother w=wife/husband c=child b=brother/sister")
-    click.echo("Example: 1f 2m 3w 4c    Enter=skip  q=quit\n")
+    click.echo(f"\n{len(famille_contacts)} famille contacts to edit\n")
 
     edited = 0
     for idx, contact in enumerate(famille_contacts, 1):
         surname = (contact.get("name_family") or "").strip().lower()
         slug = contact.get("slug", "")
-        same_family = [
+        candidates = [
             c for c in by_surname.get(surname, [])
             if c.get("slug") != slug
         ]
 
         click.echo(f"── [{idx}/{len(famille_contacts)}] {contact.get('name')} ──")
-        candidates = same_family
+        _show_existing_links(contact)
+        click.echo()
         if candidates:
             for n, c in enumerate(candidates, 1):
                 click.echo(f"    {n}. {c.get('name')}")
         else:
-            click.echo("    (no same-surname contacts)")
-            click.echo("    Type ?text to search, e.g. ?dupon")
+            click.echo("    (aucun contact même nom)")
+        click.echo()
+        click.echo("    f=père m=mère w=conjoint c=enfant b=frère/sœur")
+        click.echo("    ?texte=chercher  Enter=skip  q=quit")
         click.echo()
 
         while True:
@@ -344,7 +391,7 @@ def famille(ctx: click.Context) -> None:
                     for n, c in enumerate(candidates, 1):
                         click.echo(f"    {n}. {c.get('name')}")
                 else:
-                    click.echo(f"    no match for '{query}'")
+                    click.echo(f"    aucun résultat pour '{query}'")
                 click.echo()
                 continue
 
@@ -352,23 +399,25 @@ def famille(ctx: click.Context) -> None:
             updates: dict[str, str] = {}
             children: list[str] = []
             siblings: list[str] = []
-            valid = True
+            reciprocals: list[tuple[dict, dict[str, str]]] = []
+            ok = True
             for token in raw.lower().split():
                 if len(token) < 2:
-                    valid = False
+                    ok = False
                     continue
                 num_str = token[:-1]
                 code = token[-1]
                 if not num_str.isdigit() or code not in role_map:
-                    click.echo(f"    ? invalid: {token}")
-                    valid = False
+                    click.echo(f"    ? invalide: {token}")
+                    ok = False
                     continue
                 n = int(num_str)
                 if n < 1 or n > len(candidates):
-                    click.echo(f"    ? out of range: {token}")
-                    valid = False
+                    click.echo(f"    ? hors limite: {token}")
+                    ok = False
                     continue
-                target_slug = candidates[n - 1].get("slug", "")
+                target = candidates[n - 1]
+                target_slug = target.get("slug", "")
                 role = role_map[code]
                 if role == "enfants":
                     children.append(target_slug)
@@ -376,8 +425,12 @@ def famille(ctx: click.Context) -> None:
                     siblings.append(target_slug)
                 else:
                     updates[role] = target_slug
+                # Prepare reciprocal update.
+                rev = _reciprocal_updates(role, slug, target)
+                if rev:
+                    reciprocals.append((target, rev))
 
-            if not valid and not updates and not children and not siblings:
+            if not ok and not updates and not children and not siblings:
                 continue
 
             if children:
@@ -386,9 +439,21 @@ def famille(ctx: click.Context) -> None:
                 updates["freres_soeurs"] = f"[{', '.join(siblings)}]"
 
             if updates:
+                # Save on current contact.
                 save_triage(contact["_path"], updates)
                 summary = " ".join(f"{k}={v}" for k, v in updates.items())
-                click.echo(f"  ✓ {summary}")
+                click.echo(f"  ✓ {contact.get('name')}: {summary}")
+                # Save reciprocals.
+                for target, rev_updates in reciprocals:
+                    target_path = target.get("_path")
+                    if target_path:
+                        save_triage(target_path, rev_updates)
+                        rev_summary = " ".join(
+                            f"{k}={v}" for k, v in rev_updates.items()
+                        )
+                        click.echo(
+                            f"  ↔ {target.get('name')}: {rev_summary}"
+                        )
                 edited += 1
             break
 
