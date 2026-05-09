@@ -76,8 +76,8 @@ def run_sync(cfg: JeffConfig, full: bool = False) -> SyncResult:
     # Writeback: CRM URL.
     url_count = _writeback_urls(cfg, client, updated, new_state, content_dir)
 
-    # Writeback: gender.
-    gender_count = _writeback_gender(client, updated, new_state, content_dir)
+    # Writeback: gender (for ALL contacts with genre set locally, not just updated).
+    gender_count = _writeback_gender(client, new_state, content_dir)
 
     # Save state.
     new_state.save(state_path)
@@ -120,35 +120,46 @@ def _writeback_urls(
 
 def _writeback_gender(
     client: CardDAVClient,
-    updated: list[Contact],
     new_state: SyncState,
     content_dir: Path,
 ) -> int:
-    """Write gender back to CardDAV for contacts that have it set locally."""
-    if not updated:
+    """Write gender back to CardDAV for all contacts that have it set locally.
+
+    Iterates over all local .md files (not just updated contacts) so that
+    running ``jeff genre`` followed by ``jeff sync`` pushes the gender even
+    when no contact changed on the server.
+    """
+    if not content_dir.is_dir():
         return 0
     count = 0
-    for contact in updated:
-        data = parse_vcard(contact.vcard_raw)
-        slug = data.get("slug", "")
-        if not slug:
-            continue
-        md_path = content_dir / f"{slug}.md"
-        if not md_path.exists():
-            continue
+    # Build href→etag lookup from state.
+    slug_to_href: dict[str, str] = {}
+    for href, info in new_state.contacts.items():
+        s = info.get("slug", "")
+        if s:
+            slug_to_href[s] = href
+
+    for md_path in sorted(content_dir.glob("*.md")):
         md_data = load_contact(md_path)
         if not md_data or not md_data.get("genre"):
             continue
-        if contact.href in new_state.contacts:
-            etag = new_state.contacts[contact.href].get("etag", contact.etag)
-        else:
-            etag = contact.etag
-        new_vcard = inject_gender(contact.vcard_raw, md_data["genre"])
-        if new_vcard is None:
+        slug = md_data.get("slug", "")
+        href = slug_to_href.get(slug)
+        if not href:
             continue
-        new_etag = client.put_contact(contact.href, new_vcard, etag)
+        etag = new_state.contacts[href].get("etag", "")
+        if not etag:
+            continue
+        # Fetch current vCard to check if gender already set.
+        contacts = client.fetch_contacts(href.rsplit("/", 1)[0] + "/", [href])
+        if not contacts:
+            continue
+        current_vcard = contacts[0].vcard_raw
+        new_vcard = inject_gender(current_vcard, md_data["genre"])
+        if new_vcard is None:
+            continue  # Already correct.
+        new_etag = client.put_contact(href, new_vcard, contacts[0].etag)
         if new_etag:
             count += 1
-            if contact.href in new_state.contacts:
-                new_state.contacts[contact.href]["etag"] = new_etag
+            new_state.contacts[href]["etag"] = new_etag
     return count
