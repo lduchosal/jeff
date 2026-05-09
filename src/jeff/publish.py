@@ -25,7 +25,7 @@ def _parse_frontmatter(path: Path) -> dict[str, Any]:
     Returns the frontmatter as a dict. Ignores body content after the closing ``---``.
     """
     text = path.read_text(encoding="utf-8")
-    lines = text.split("\n")
+    lines = text.split("\n")  # noqa: FURB184
     if not lines or lines[0].strip() != "---":
         return {}
     # Find the closing --- on its own line.

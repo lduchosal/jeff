@@ -203,15 +203,16 @@ def _yaml_value(value: Any) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, str):
+        s: str = value
         # Collapse multi-line values (e.g. vCard ADR street with \n).
-        if "\n" in value:
-            value = ", ".join(line.strip() for line in value.splitlines() if line.strip())
+        if "\n" in s:
+            s = ", ".join(line.strip() for line in s.splitlines() if line.strip())
         # Quote strings containing special chars.
-        if any(c in value for c in ":{}[]#&*!|>'\",@`"):
-            return f'"{value}"'
-        if value.startswith("+"):
-            return f'"{value}"'
-        return value
+        if any(c in s for c in ":{}[]#&*!|>'\",@`"):
+            return f'"{s}"'
+        if s.startswith("+"):
+            return f'"{s}"'
+        return s
     return str(value)
 
 

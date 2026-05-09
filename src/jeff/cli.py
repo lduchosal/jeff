@@ -5,6 +5,7 @@ Usage::
     jeff sync          # incremental sync
     jeff sync --full   # force full sync
     jeff publish       # build static HTML site
+    jeff triage        # interactive contact triage
 """
 
 from __future__ import annotations
@@ -165,3 +166,84 @@ def publish(ctx: click.Context, output: str) -> None:
 
     count = build_site(content_dir, output_dir, photo_dir, css_path)
     click.echo(f"Published {count} contact(s) to {output_dir}")
+
+
+@cli.command()
+@click.option("--all", "show_all", is_flag=True, help="Show all contacts, including already triaged.")
+@click.pass_context
+def triage(ctx: click.Context, show_all: bool) -> None:
+    """Interactive triage of contacts."""
+    from jeff.triage import format_summary, load_contact, needs_triage, save_triage
+
+    cfg = ctx.obj["cfg"]
+    base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
+    content_dir = base / cfg.content_dir
+
+    if not content_dir.is_dir():
+        click.echo("No contacts found.", err=True)
+        sys.exit(1)
+
+    files = sorted(content_dir.glob("*.md"))
+    contacts = []
+    for f in files:
+        data = load_contact(f)
+        if data and data.get("name"):
+            if show_all or needs_triage(data):
+                contacts.append(data)
+
+    total = len(list(content_dir.glob("*.md")))
+    done = total - len([1 for f in files if (d := load_contact(f)) and needs_triage(d)])
+
+    if not contacts:
+        click.echo(f"All {total} contacts have been triaged.")
+        return
+
+    click.echo(f"\n{len(contacts)} contacts to triage ({done}/{total} done)\n")
+    click.echo("Commands: a=actif  r=archivé  s=skip  q=quit")
+    click.echo("After status, enter relation (a/c/f/k) and priority (h/m/b):")
+    click.echo("  relation: a=ami  c=collegue  f=famille  k=connaissance")
+    click.echo("  priority: h=haute  m=moyenne  b=basse")
+    click.echo("Example: 'a a h' = actif, ami, haute priorité")
+    click.echo("         'r' = archivé (no relation/priority needed)")
+    click.echo("         's' = skip for now\n")
+
+    relation_map = {"a": "ami", "c": "collegue", "f": "famille", "k": "connaissance"}
+    priority_map = {"h": "haute", "m": "moyenne", "b": "basse"}
+
+    triaged = 0
+    for i, data in enumerate(contacts, 1):
+        path = data["_path"]
+        click.echo(f"── [{i}/{len(contacts)}] {'─' * 50}")
+        click.echo(format_summary(data))
+        click.echo()
+
+        while True:
+            raw = click.prompt("  >", default="s").strip().lower()
+            if raw == "q":
+                click.echo(f"\nTriaged {triaged} contact(s) this session.")
+                return
+            if raw == "s":
+                break
+
+            parts = raw.split()
+            cmd = parts[0] if parts else ""
+
+            if cmd == "a":
+                updates = {"status": "actif"}
+                if len(parts) >= 2 and parts[1] in relation_map:
+                    updates["relation"] = relation_map[parts[1]]
+                if len(parts) >= 3 and parts[2] in priority_map:
+                    updates["priorite"] = priority_map[parts[2]]
+                save_triage(path, updates)
+                triaged += 1
+                click.echo(f"  ✓ {data['name']} → actif")
+                break
+            elif cmd == "r":
+                save_triage(path, {"status": "archivé"})
+                triaged += 1
+                click.echo(f"  ✗ {data['name']} → archivé")
+                break
+            else:
+                click.echo("  ? a/r/s/q (ex: 'a a h', 'r', 's')")
+
+    click.echo(f"\nTriaged {triaged} contact(s) this session.")
