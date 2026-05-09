@@ -42,6 +42,16 @@ FN:Marie
 N:;Marie;;;
 END:VCARD"""
 
+VCARD_MULTILINE_ADR = (
+    "BEGIN:VCARD\r\n"
+    "VERSION:3.0\r\n"
+    "UID:urn:uuid:multiline-adr\r\n"
+    "FN:Cinetoile\r\n"
+    "N:;Cinetoile;;;\r\n"
+    "ADR;TYPE=HOME:;;Centre Malley Lumières\\nChemin du Viaduc 1;Prilly;;1008;Switzerland\r\n"
+    "END:VCARD"
+)
+
 VCARD_MULTI_ORG = """\
 BEGIN:VCARD
 VERSION:3.0
@@ -124,6 +134,21 @@ class TestParseVcard:
         assert data["positions"][0]["title"] == "CEO"
         assert data["positions"][1]["org"] == "Beta GmbH"
         assert data["positions"][1]["title"] == "Advisor"
+
+
+    def test_multiline_address(self) -> None:
+        """Multi-line street in ADR produces valid YAML frontmatter."""
+        import yaml
+
+        data = parse_vcard(VCARD_MULTILINE_ADR)
+        data.pop("_photo_data", None)
+        fm = render_frontmatter(data)
+        # The frontmatter must be valid YAML.
+        yaml_text = fm.strip().removeprefix("---").removesuffix("---").strip()
+        parsed = yaml.safe_load(yaml_text)
+        street = parsed["addresses"][0]["street"]
+        assert "Centre Malley" in street
+        assert "Chemin du Viaduc" in street
 
 
 # -- render_frontmatter tests --------------------------------------------------

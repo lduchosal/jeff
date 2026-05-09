@@ -203,6 +203,9 @@ def _yaml_value(value: Any) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, str):
+        # Collapse multi-line values (e.g. vCard ADR street with \n).
+        if "\n" in value:
+            value = ", ".join(line.strip() for line in value.splitlines() if line.strip())
         # Quote strings containing special chars.
         if any(c in value for c in ":{}[]#&*!|>'\",@`"):
             return f'"{value}"'
