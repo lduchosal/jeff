@@ -1,11 +1,11 @@
 ---
 id: 290
-status: review
+status: done
 who: Claude
 due_date: 
-position: 1
+position: 0
 created_at: 2026-05-08T23:52:00
-updated_at: 2026-05-09T00:03:44
+updated_at: 2026-05-09T20:25:51
 ---
 
 # QUALITY / SonarCloud

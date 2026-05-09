@@ -1,11 +1,11 @@
 ---
 id: 285
-status: review
+status: done
 who: Claude
 due_date: 
-position: 5
+position: 1
 created_at: 2026-05-08T23:35:59
-updated_at: 2026-05-08T23:50:00
+updated_at: 2026-05-09T20:25:55
 ---
 
 # MARKETING / favicon

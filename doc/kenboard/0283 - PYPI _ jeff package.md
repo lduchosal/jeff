@@ -1,11 +1,11 @@
 ---
 id: 283
-status: review
+status: done
 who: Claude
 due_date: 
-position: 3
+position: 1
 created_at: 2026-05-08T23:24:36
-updated_at: 2026-05-08T23:50:01
+updated_at: 2026-05-09T20:25:52
 ---
 
 # PYPI / jeff package
