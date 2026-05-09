@@ -37,6 +37,11 @@ jobs:
         python -m pip install --upgrade pip pdm
         pdm self add pdm-bump
 
+    - name: Install dependencies
+      run: |
+        pdm install
+        pdm install -G dev
+
     - name: Configure git
       run: |
         git config user.name "github-actions[bot]"
