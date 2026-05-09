@@ -253,6 +253,52 @@ def triage(ctx: click.Context, show_all: bool) -> None:
     click.echo(f"\nTriaged {triaged} contact(s) this session.")
 
 
+@cli.command()
+@click.pass_context
+def genre(ctx: click.Context) -> None:
+    """Set genre (H/F) on all contacts that don't have one yet."""
+    from jeff.triage import load_contact, save_triage
+
+    cfg = ctx.obj["cfg"]
+    base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
+    content_dir = base / cfg.content_dir
+
+    if not content_dir.is_dir():
+        click.echo("No contacts found.", err=True)
+        sys.exit(1)
+
+    contacts = []
+    for md in sorted(content_dir.glob("*.md")):
+        data = load_contact(md)
+        if data and data.get("name") and not data.get("genre"):
+            contacts.append(data)
+
+    if not contacts:
+        click.echo("All contacts have a genre set.")
+        return
+
+    click.echo(f"\n{len(contacts)} contacts without genre")
+    click.echo("H=homme  F=femme  Enter=skip  q=quit\n")
+
+    edited = 0
+    for i, data in enumerate(contacts, 1):
+        raw = click.prompt(
+            f"  [{i}/{len(contacts)}] {data.get('name')}",
+            default="",
+            show_default=False,
+        ).strip().lower()
+        if raw == "q":
+            break
+        if raw == "h":
+            save_triage(data["_path"], {"genre": "homme"})
+            edited += 1
+        elif raw == "f":
+            save_triage(data["_path"], {"genre": "femme"})
+            edited += 1
+
+    click.echo(f"\nSet genre on {edited} contact(s).")
+
+
 def _reciprocal_updates(
     role: str, source_slug: str, source: dict, target: dict,
 ) -> dict[str, str]:
