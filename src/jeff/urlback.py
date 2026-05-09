@@ -34,6 +34,32 @@ def inject_crm_url(vcard_raw: str, profile_url: str) -> str | None:
     return "\n".join(new_lines)
 
 
+def inject_gender(vcard_raw: str, genre: str) -> str | None:
+    """Inject an X-GENDER property into a vCard string.
+
+    Returns the modified vCard, or None if the gender is already set to
+    the same value. Uses ``X-GENDER`` (widely supported by CardDAV clients).
+    """
+    gender_value = "M" if genre == "homme" else "F"
+    existing_line = f"X-GENDER:{gender_value}"
+
+    # Already present with the same value.
+    if existing_line in vcard_raw:
+        return None
+
+    # Remove any existing X-GENDER line.
+    lines = [line for line in vcard_raw.splitlines() if not line.startswith("X-GENDER:")]
+
+    # Insert before END:VCARD.
+    new_lines: list[str] = []
+    for line in lines:
+        if line.strip().upper() == "END:VCARD":
+            new_lines.append(existing_line)
+        new_lines.append(line)
+
+    return "\n".join(new_lines)
+
+
 def build_profile_url(publish_url: str, slug: str) -> str:
     """Build the full profile URL for a contact.
 

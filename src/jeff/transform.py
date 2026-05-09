@@ -195,6 +195,15 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
     if hasattr(vc, "rev"):
         data["rev"] = vc.rev.value
 
+    # Gender (X-GENDER property).
+    x_gender = vc.contents.get("x-gender", [None])[0]
+    if x_gender and x_gender.value:
+        val = x_gender.value.strip().upper()
+        if val == "M":
+            data["genre"] = "homme"
+        elif val == "F":
+            data["genre"] = "femme"
+
     return data
 
 

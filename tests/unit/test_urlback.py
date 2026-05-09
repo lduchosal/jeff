@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from jeff.urlback import build_profile_url, inject_crm_url
+from jeff.urlback import build_profile_url, inject_crm_url, inject_gender
 
 SAMPLE_VCARD = """\
 BEGIN:VCARD
@@ -58,6 +58,37 @@ class TestInjectCrmUrl:
         assert result is not None
         assert "old.example.com" not in result
         assert "https://new.example.com/contacts/jean.html" in result
+
+
+class TestInjectGender:
+    """Tests for gender injection into vCard."""
+
+    def test_injects_male(self) -> None:
+        """Adds X-GENDER:M for homme."""
+        result = inject_gender(SAMPLE_VCARD, "homme")
+        assert result is not None
+        assert "X-GENDER:M" in result
+        assert result.endswith("END:VCARD")
+
+    def test_injects_female(self) -> None:
+        """Adds X-GENDER:F for femme."""
+        result = inject_gender(SAMPLE_VCARD, "femme")
+        assert result is not None
+        assert "X-GENDER:F" in result
+
+    def test_skips_if_same(self) -> None:
+        """Returns None when gender is already set to the same value."""
+        vcard = SAMPLE_VCARD.replace("END:VCARD", "X-GENDER:M\nEND:VCARD")
+        result = inject_gender(vcard, "homme")
+        assert result is None
+
+    def test_replaces_different(self) -> None:
+        """Replaces existing X-GENDER when changing."""
+        vcard = SAMPLE_VCARD.replace("END:VCARD", "X-GENDER:M\nEND:VCARD")
+        result = inject_gender(vcard, "femme")
+        assert result is not None
+        assert "X-GENDER:F" in result
+        assert "X-GENDER:M" not in result
 
 
 class TestBuildProfileUrl:

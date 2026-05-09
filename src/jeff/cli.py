@@ -125,6 +125,38 @@ def sync(ctx: click.Context, full: bool) -> None:
                 if contact.href in new_state.contacts:
                     new_state.contacts[contact.href]["etag"] = new_etag
 
+    # Write gender back to Baikal for contacts that have genre set locally.
+    gender_count = 0
+    if updated:
+        from jeff.triage import load_contact as _load_md
+        from jeff.urlback import inject_gender
+
+        for contact in updated:
+            data = parse_vcard(contact.vcard_raw)
+            slug = data.get("slug", "")
+            if not slug:
+                continue
+            md_path = content_dir / f"{slug}.md"
+            if not md_path.exists():
+                continue
+            md_data = _load_md(md_path)
+            if not md_data or not md_data.get("genre"):
+                continue
+            vcard = contact.vcard_raw
+            # Use latest vcard (may have been updated by URL writeback).
+            if contact.href in new_state.contacts:
+                etag = new_state.contacts[contact.href].get("etag", contact.etag)
+            else:
+                etag = contact.etag
+            new_vcard = inject_gender(vcard, md_data["genre"])
+            if new_vcard is None:
+                continue
+            new_etag = client.put_contact(contact.href, new_vcard, etag)
+            if new_etag:
+                gender_count += 1
+                if contact.href in new_state.contacts:
+                    new_state.contacts[contact.href]["etag"] = new_etag
+
     # Save state.
     new_state.save(state_path)
 
@@ -142,6 +174,8 @@ def sync(ctx: click.Context, full: bool) -> None:
                 click.echo(f"  - {name}")
         if url_count:
             click.echo(f"URL written back: {url_count} contact(s)")
+        if gender_count:
+            click.echo(f"Gender written back: {gender_count} contact(s)")
 
 
 @cli.command()
