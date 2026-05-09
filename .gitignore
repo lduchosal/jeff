@@ -8,6 +8,7 @@ build/
 htmlcov/
 .coverage
 .pdm-python
+uv.lock
 .venv/
 *.egg
 .ken
