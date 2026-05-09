@@ -313,53 +313,83 @@ def famille(ctx: click.Context) -> None:
         ]
 
         click.echo(f"── [{idx}/{len(famille_contacts)}] {contact.get('name')} ──")
-        if same_family:
-            for n, c in enumerate(same_family, 1):
+        candidates = same_family
+        if candidates:
+            for n, c in enumerate(candidates, 1):
                 click.echo(f"    {n}. {c.get('name')}")
         else:
-            click.echo("    (no same-surname contacts found)")
+            click.echo("    (no same-surname contacts)")
+            click.echo("    Type ?text to search, e.g. ?dupon")
         click.echo()
 
-        raw = click.prompt("  >", default="").strip().lower()
-        if raw == "q":
+        while True:
+            raw = click.prompt("  >", default="").strip()
+            if raw.lower() == "q":
+                click.echo(f"\nEdited {edited} contact(s).")
+                return
+            if not raw:
+                break
+
+            # Search mode: ?query
+            if raw.startswith("?"):
+                query = raw[1:].strip().lower()
+                if not query:
+                    continue
+                candidates = [
+                    c for c in all_contacts
+                    if c.get("slug") != slug
+                    and query in (c.get("name") or "").lower()
+                ]
+                if candidates:
+                    for n, c in enumerate(candidates, 1):
+                        click.echo(f"    {n}. {c.get('name')}")
+                else:
+                    click.echo(f"    no match for '{query}'")
+                click.echo()
+                continue
+
+            # Parse tokens like "1f 2m 3w 4c 5b"
+            updates: dict[str, str] = {}
+            children: list[str] = []
+            siblings: list[str] = []
+            valid = True
+            for token in raw.lower().split():
+                if len(token) < 2:
+                    valid = False
+                    continue
+                num_str = token[:-1]
+                code = token[-1]
+                if not num_str.isdigit() or code not in role_map:
+                    click.echo(f"    ? invalid: {token}")
+                    valid = False
+                    continue
+                n = int(num_str)
+                if n < 1 or n > len(candidates):
+                    click.echo(f"    ? out of range: {token}")
+                    valid = False
+                    continue
+                target_slug = candidates[n - 1].get("slug", "")
+                role = role_map[code]
+                if role == "enfants":
+                    children.append(target_slug)
+                elif role == "freres_soeurs":
+                    siblings.append(target_slug)
+                else:
+                    updates[role] = target_slug
+
+            if not valid and not updates and not children and not siblings:
+                continue
+
+            if children:
+                updates["enfants"] = f"[{', '.join(children)}]"
+            if siblings:
+                updates["freres_soeurs"] = f"[{', '.join(siblings)}]"
+
+            if updates:
+                save_triage(contact["_path"], updates)
+                summary = " ".join(f"{k}={v}" for k, v in updates.items())
+                click.echo(f"  ✓ {summary}")
+                edited += 1
             break
-        if not raw:
-            continue
-
-        # Parse tokens like "1f 2m 3w 4c 5b"
-        updates: dict[str, str] = {}
-        children: list[str] = []
-        siblings: list[str] = []
-        for token in raw.split():
-            if len(token) < 2:
-                continue
-            num_str = token[:-1]
-            code = token[-1]
-            if not num_str.isdigit() or code not in role_map:
-                click.echo(f"    ? invalid: {token}")
-                continue
-            n = int(num_str)
-            if n < 1 or n > len(same_family):
-                click.echo(f"    ? out of range: {token}")
-                continue
-            target_slug = same_family[n - 1].get("slug", "")
-            role = role_map[code]
-            if role == "enfants":
-                children.append(target_slug)
-            elif role == "freres_soeurs":
-                siblings.append(target_slug)
-            else:
-                updates[role] = target_slug
-
-        if children:
-            updates["enfants"] = f"[{', '.join(children)}]"
-        if siblings:
-            updates["freres_soeurs"] = f"[{', '.join(siblings)}]"
-
-        if updates:
-            save_triage(contact["_path"], updates)
-            summary = " ".join(f"{k}={v}" for k, v in updates.items())
-            click.echo(f"  ✓ {summary}")
-            edited += 1
 
     click.echo(f"\nEdited {edited} contact(s).")
