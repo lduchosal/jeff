@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
+
+from jeff.services.triage import load_contact, save_triage
+
+ROLE_MAP = {
+    "f": "pere", "m": "mere", "w": "conjoint",
+    "c": "enfants", "b": "freres_soeurs",
+}
 
 
 def reciprocal_updates(
@@ -73,3 +82,120 @@ def _parse_slug_list(value: Any) -> list[str]:
     if isinstance(value, str):
         return [s.strip() for s in value.strip("[] ").split(",") if s.strip()]
     return []
+
+
+@dataclass
+class FamilleContext:
+    """Loaded state for the famille editing session."""
+
+    all_contacts: list[dict] = field(default_factory=list)
+    famille_contacts: list[dict] = field(default_factory=list)
+    by_surname: dict[str, list[dict]] = field(default_factory=dict)
+
+
+def load_famille_context(content_dir: Path) -> FamilleContext:
+    """Load all contacts and prepare famille editing context."""
+    ctx = FamilleContext()
+    for md in sorted(content_dir.glob("*.md")):
+        data = load_contact(md)
+        if data and data.get("name"):
+            ctx.all_contacts.append(data)
+            surname = (data.get("name_family") or "").strip().lower()
+            if surname:
+                ctx.by_surname.setdefault(surname, []).append(data)
+    ctx.famille_contacts = [
+        c for c in ctx.all_contacts if c.get("relation") == "famille"
+    ]
+    return ctx
+
+
+def same_surname_candidates(ctx: FamilleContext, contact: dict) -> list[dict]:
+    """Return contacts with the same surname, excluding self."""
+    surname = (contact.get("name_family") or "").strip().lower()
+    slug = contact.get("slug", "")
+    return [c for c in ctx.by_surname.get(surname, []) if c.get("slug") != slug]
+
+
+def search_contacts(ctx: FamilleContext, query: str, exclude_slug: str) -> list[dict]:
+    """Search contacts by name substring."""
+    q = query.lower()
+    return [
+        c for c in ctx.all_contacts
+        if c.get("slug") != exclude_slug and q in (c.get("name") or "").lower()
+    ]
+
+
+@dataclass
+class ParsedTokens:
+    """Result of parsing family assignment tokens."""
+
+    updates: dict[str, str] = field(default_factory=dict)
+    reciprocals: list[tuple[dict, dict[str, str]]] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+
+def parse_tokens(
+    raw: str, candidates: list[dict], contact: dict,
+) -> ParsedTokens:
+    """Parse tokens like '1f 2m 3w 4c 5b' into updates and reciprocals."""
+    result = ParsedTokens()
+    slug = contact.get("slug", "")
+    children: list[str] = []
+    siblings: list[str] = []
+
+    for token in raw.lower().split():
+        if len(token) < 2:
+            result.errors.append(f"invalide: {token}")
+            continue
+        num_str = token[:-1]
+        code = token[-1]
+        if not num_str.isdigit() or code not in ROLE_MAP:
+            result.errors.append(f"invalide: {token}")
+            continue
+        n = int(num_str)
+        if n < 1 or n > len(candidates):
+            result.errors.append(f"hors limite: {token}")
+            continue
+        target = candidates[n - 1]
+        target_slug = target.get("slug", "")
+        role = ROLE_MAP[code]
+        if role == "enfants":
+            children.append(target_slug)
+        elif role == "freres_soeurs":
+            siblings.append(target_slug)
+        else:
+            result.updates[role] = target_slug
+        rev = reciprocal_updates(role, slug, contact, target)
+        if rev:
+            result.reciprocals.append((target, rev))
+
+    if children:
+        result.updates["enfants"] = merge_list_field(contact, "enfants", children)
+    if siblings:
+        result.updates["freres_soeurs"] = merge_list_field(
+            contact, "freres_soeurs", siblings
+        )
+    return result
+
+
+def apply_famille_updates(
+    contact: dict, parsed: ParsedTokens,
+) -> list[str]:
+    """Apply parsed tokens to contact and targets. Return summary lines."""
+    lines: list[str] = []
+    if not parsed.updates:
+        return lines
+    save_triage(contact["_path"], parsed.updates)
+    for k, v in parsed.updates.items():
+        contact[k] = v
+    summary = " ".join(f"{k}={v}" for k, v in parsed.updates.items())
+    lines.append(f"✓ {contact.get('name')}: {summary}")
+    for target, rev_updates in parsed.reciprocals:
+        target_path = target.get("_path")
+        if target_path:
+            save_triage(target_path, rev_updates)
+            for k, v in rev_updates.items():
+                target[k] = v
+            rev_summary = " ".join(f"{k}={v}" for k, v in rev_updates.items())
+            lines.append(f"↔ {target.get('name')}: {rev_summary}")
+    return lines
