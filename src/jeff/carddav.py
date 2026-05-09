@@ -132,7 +132,8 @@ class CardDAVClient:
         url = self._absolute(addressbook_href)
         resp = self._request("PROPFIND", url, body, depth="0")
         tree = etree.fromstring(resp.content)
-        return tree.findtext(".//cs:getctag", None, _NS)
+        ctag: str | None = tree.findtext(".//cs:getctag", None, _NS)
+        return ctag
 
     def list_contacts(self, addressbook_href: str) -> dict[str, str]:
         """List all contact hrefs and their etags in an addressbook.
