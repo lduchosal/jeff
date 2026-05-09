@@ -32,6 +32,26 @@ slug: marie
 ---
 """
 
+SAMPLE_MD_WITH_BODY_DASHES = """\
+---
+name: Pierre Martin
+slug: pierre-martin
+email: "pierre@example.com"
+note: "Contact via réseau---rencontre au salon"
+addresses:
+  - street: Chemin du Viaduc 1
+    city: Prilly
+    postal_code: "1008"
+    country: Switzerland
+---
+
+Some body text.
+
+---
+
+More text after a horizontal rule.
+"""
+
 
 class TestParseFrontmatter:
     """Tests for frontmatter parsing."""
@@ -44,6 +64,15 @@ class TestParseFrontmatter:
         assert data["name"] == "Jean Dupont"
         assert data["slug"] == "jean-dupont"
         assert data["tags"] == ["ami", "tech"]
+
+    def test_body_with_dashes(self, tmp_path: Path) -> None:
+        """Ignores --- horizontal rules in the body."""
+        f = tmp_path / "test.md"
+        f.write_text(SAMPLE_MD_WITH_BODY_DASHES)
+        data = _parse_frontmatter(f)
+        assert data["name"] == "Pierre Martin"
+        assert data["slug"] == "pierre-martin"
+        assert data["addresses"][0]["street"] == "Chemin du Viaduc 1"
 
     def test_handles_no_frontmatter(self, tmp_path: Path) -> None:
         """Returns empty dict when no frontmatter."""

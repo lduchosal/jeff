@@ -25,13 +25,15 @@ def _parse_frontmatter(path: Path) -> dict[str, Any]:
     Returns the frontmatter as a dict. Ignores body content after the closing ``---``.
     """
     text = path.read_text(encoding="utf-8")
-    if not text.startswith("---"):
+    lines = text.split("\n")
+    if not lines or lines[0].strip() != "---":
         return {}
-    # Split on the second ---.
-    parts = text.split("---", 2)
-    if len(parts) < 3:
-        return {}
-    return yaml.safe_load(parts[1]) or {}
+    # Find the closing --- on its own line.
+    for i, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            yaml_text = "\n".join(lines[1:i])
+            return yaml.safe_load(yaml_text) or {}
+    return {}
 
 
 def _load_contacts(content_dir: Path) -> list[dict[str, Any]]:
