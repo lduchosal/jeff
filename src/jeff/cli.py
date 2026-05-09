@@ -200,14 +200,16 @@ def triage(ctx: click.Context, show_all: bool) -> None:
 
     click.echo(f"\n{len(contacts)} contacts to triage ({done}/{total} done)\n")
     click.echo("Commands: a=actif  r=archivé  s=skip  q=quit")
-    click.echo("After status, enter relation (a/c/f/k) and priority (h/m/b):")
+    click.echo("After status: relation (a/c/f/k), priority (h/m/b), genre (H/F):")
     click.echo("  relation: a=ami  c=collegue  f=famille  k=connaissance")
     click.echo("  priority: h=haute  m=moyenne  b=basse")
-    click.echo("Example: 'a a h' = actif, ami, haute priorité")
-    click.echo("         'r' = archivé (no relation/priority needed)")
-    click.echo("         's' = skip for now\n")
+    click.echo("  genre:    H=homme  F=femme")
+    click.echo("Example: 'a f h H' = actif, famille, haute, homme")
+    click.echo("         'r' = archivé")
+    click.echo("         's' = skip\n")
 
     relation_map = {"a": "ami", "c": "collegue", "f": "famille", "k": "connaissance"}
+    genre_map = {"h": "homme", "f": "femme"}
     priority_map = {"h": "haute", "m": "moyenne", "b": "basse"}
 
     triaged = 0
@@ -234,6 +236,8 @@ def triage(ctx: click.Context, show_all: bool) -> None:
                     updates["relation"] = relation_map[parts[1]]
                 if len(parts) >= 3 and parts[2] in priority_map:
                     updates["priorite"] = priority_map[parts[2]]
+                if len(parts) >= 4 and parts[3].lower() in genre_map:
+                    updates["genre"] = genre_map[parts[3].lower()]
                 save_triage(path, updates)
                 triaged += 1
                 click.echo(f"  ✓ {data['name']} → actif")
@@ -250,17 +254,26 @@ def triage(ctx: click.Context, show_all: bool) -> None:
 
 
 def _reciprocal_updates(
-    role: str, source_slug: str, target: dict,
+    role: str, source_slug: str, source: dict, target: dict,
 ) -> dict[str, str]:
-    """Compute the reciprocal family link update for the target contact."""
+    """Compute the reciprocal family link update for the target contact.
+
+    Uses source genre to pick pere vs mere when the reciprocal of 'enfants'
+    is needed (i.e. source says target is their child, so target gets
+    pere or mere pointing back to source).
+    """
     reciprocal: dict[str, str] = {
         "pere": "enfants",
         "mere": "enfants",
         "conjoint": "conjoint",
-        "enfants": "pere",
         "freres_soeurs": "freres_soeurs",
     }
-    rev = reciprocal.get(role, "")
+    if role == "enfants":
+        # Source is the parent — use source genre to decide pere/mere.
+        genre = (source.get("genre") or "").lower()
+        rev = "mere" if genre == "femme" else "pere"
+    else:
+        rev = reciprocal.get(role, "")
     if not rev:
         return {}
     if rev in ("enfants", "freres_soeurs"):
@@ -356,12 +369,14 @@ def famille(ctx: click.Context) -> None:
             if c.get("slug") != slug
         ]
 
-        click.echo(f"── [{idx}/{len(famille_contacts)}] {contact.get('name')} ──")
+        genre_label = f" ({contact.get('genre')})" if contact.get("genre") else ""
+        click.echo(f"── [{idx}/{len(famille_contacts)}] {contact.get('name')}{genre_label} ──")
         _show_existing_links(contact)
         click.echo()
         if candidates:
             for n, c in enumerate(candidates, 1):
-                click.echo(f"    {n}. {c.get('name')}")
+                g = f" ({c.get('genre')})" if c.get("genre") else ""
+                click.echo(f"    {n}. {c.get('name')}{g}")
         else:
             click.echo("    (aucun contact même nom)")
         click.echo()
@@ -426,7 +441,7 @@ def famille(ctx: click.Context) -> None:
                 else:
                     updates[role] = target_slug
                 # Prepare reciprocal update.
-                rev = _reciprocal_updates(role, slug, target)
+                rev = _reciprocal_updates(role, slug, contact, target)
                 if rev:
                     reciprocals.append((target, rev))
 
