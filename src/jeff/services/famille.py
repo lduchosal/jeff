@@ -9,19 +9,25 @@ from typing import Any
 from jeff.services.triage import load_contact, save_triage
 
 ROLE_MAP = {
-    "f": "pere", "m": "mere", "w": "conjoint",
-    "c": "enfants", "b": "freres_soeurs",
+    "f": "pere",
+    "m": "mere",
+    "w": "conjoint",
+    "c": "enfants",
+    "b": "freres_soeurs",
 }
 
 
 def reciprocal_updates(
-    role: str, source_slug: str, source: dict, target: dict,
+    role: str,
+    source_slug: str,
+    source: dict,
+    target: dict,
 ) -> dict[str, str]:
     """Compute the reciprocal family link update for the target contact.
 
-    Uses source genre to pick pere vs mere when the reciprocal of 'enfants'
-    is needed (i.e. source says target is their child, so target gets
-    pere or mere pointing back to source).
+    Uses source genre to pick pere vs mere when the reciprocal of 'enfants' is needed
+    (i.e. source says target is their child, so target gets pere or mere pointing back
+    to source).
     """
     reciprocal_map: dict[str, str] = {
         "pere": "enfants",
@@ -120,7 +126,8 @@ def search_contacts(ctx: FamilleContext, query: str, exclude_slug: str) -> list[
     """Search contacts by name substring."""
     q = query.lower()
     return [
-        c for c in ctx.all_contacts
+        c
+        for c in ctx.all_contacts
         if c.get("slug") != exclude_slug and q in (c.get("name") or "").lower()
     ]
 
@@ -135,7 +142,9 @@ class ParsedTokens:
 
 
 def parse_tokens(
-    raw: str, candidates: list[dict], contact: dict,
+    raw: str,
+    candidates: list[dict],
+    contact: dict,
 ) -> ParsedTokens:
     """Parse tokens like '1f 2m 3w 4c 5b' into updates and reciprocals."""
     result = ParsedTokens()
@@ -179,9 +188,13 @@ def parse_tokens(
 
 
 def apply_famille_updates(
-    contact: dict, parsed: ParsedTokens,
+    contact: dict,
+    parsed: ParsedTokens,
 ) -> list[str]:
-    """Apply parsed tokens to contact and targets. Return summary lines."""
+    """Apply parsed tokens to contact and targets.
+
+    Return summary lines.
+    """
     lines: list[str] = []
     if not parsed.updates:
         return lines

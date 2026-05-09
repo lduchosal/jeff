@@ -366,8 +366,16 @@ def contact_to_markdown(
     content_dir.mkdir(parents=True, exist_ok=True)
     md_path = content_dir / f"{slug}.md"
     _triage_keys = (
-        "status", "relation", "frequence", "priorite", "genre",
-        "pere", "mere", "conjoint", "freres_soeurs", "enfants",
+        "status",
+        "relation",
+        "frequence",
+        "priorite",
+        "genre",
+        "pere",
+        "mere",
+        "conjoint",
+        "freres_soeurs",
+        "enfants",
     )
     if md_path.exists():
         import yaml

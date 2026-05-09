@@ -103,7 +103,10 @@ def publish(ctx: click.Context, output: str) -> None:
 def triage(ctx: click.Context, show_all: bool) -> None:
     """Interactive triage of contacts."""
     from jeff.services.triage import (
-        format_summary, load_contact, needs_triage, save_triage,
+        format_summary,
+        load_contact,
+        needs_triage,
+        save_triage,
     )
 
     content_dir = _content_dir(ctx)
@@ -113,7 +116,8 @@ def triage(ctx: click.Context, show_all: bool) -> None:
 
     files = sorted(content_dir.glob("*.md"))
     contacts = [
-        d for f in files
+        d
+        for f in files
         if (d := load_contact(f)) and d.get("name") and (show_all or needs_triage(d))
     ]
     total = len(files)
@@ -189,10 +193,15 @@ def genre(ctx: click.Context) -> None:
     click.echo("H=homme  F=femme  Enter=skip  q=quit\n")
     edited = 0
     for i, data in enumerate(contacts, 1):
-        raw = click.prompt(
-            f"  [{i}/{len(contacts)}] {data.get('name')}",
-            default="", show_default=False,
-        ).strip().lower()
+        raw = (
+            click.prompt(
+                f"  [{i}/{len(contacts)}] {data.get('name')}",
+                default="",
+                show_default=False,
+            )
+            .strip()
+            .lower()
+        )
         if raw == "q":
             break
         if apply_genre(data, raw):
@@ -229,7 +238,9 @@ def famille(ctx: click.Context) -> None:
     for idx, contact in enumerate(fctx.famille_contacts, 1):
         candidates = same_surname_candidates(fctx, contact)
         g = f" ({contact.get('genre')})" if contact.get("genre") else ""
-        click.echo(f"── [{idx}/{len(fctx.famille_contacts)}] {contact.get('name')}{g} ──")
+        click.echo(
+            f"── [{idx}/{len(fctx.famille_contacts)}] {contact.get('name')}{g} ──"
+        )
         links = format_existing_links(contact)
         for lnk in links or ["(aucun lien)"]:
             click.echo(f"    ↳ {lnk}")

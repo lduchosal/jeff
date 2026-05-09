@@ -1,8 +1,8 @@
 """Interactive triage of contact Markdown files.
 
-Walks through each untriaged contact, displays a summary, and prompts
-for status / relation / frequence / priorite.  Saves to the frontmatter
-immediately so progress is never lost.
+Walks through each untriaged contact, displays a summary, and prompts for status /
+relation / frequence / priorite.  Saves to the frontmatter immediately so progress is
+never lost.
 """
 
 from __future__ import annotations
@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 
 _TRIAGE_KEYS = ("status", "relation", "frequence", "priorite")
 

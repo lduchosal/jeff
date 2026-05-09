@@ -8,8 +8,8 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 
-from jeff.domain.carddav import Contact, SyncState
 from jeff.cli import cli
+from jeff.domain.carddav import Contact, SyncState
 
 SAMPLE_VCARD = """\
 BEGIN:VCARD
@@ -50,7 +50,10 @@ class TestSyncCommand:
             {"href": "/dav.php/addressbooks/u/default/", "displayname": "Contacts"}
         ]
         with (
-            patch("jeff.services.sync.CardDAVClient.discover_addressbooks", return_value=books),
+            patch(
+                "jeff.services.sync.CardDAVClient.discover_addressbooks",
+                return_value=books,
+            ),
             patch(
                 "jeff.services.sync.CardDAVClient.sync",
                 return_value=([], [], SyncState(ctag="c1")),
@@ -75,7 +78,10 @@ class TestSyncCommand:
             contacts={"/dav.php/addressbooks/u/default/test.vcf": {"etag": "etag-1"}},
         )
         with (
-            patch("jeff.services.sync.CardDAVClient.discover_addressbooks", return_value=books),
+            patch(
+                "jeff.services.sync.CardDAVClient.discover_addressbooks",
+                return_value=books,
+            ),
             patch(
                 "jeff.services.sync.CardDAVClient.sync",
                 return_value=([contact], [], new_state),
@@ -125,9 +131,7 @@ class TestPublishCommand:
         """Publishes a contact from a .md file."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
-            "---\nname: Test User\nslug: test\n---\n"
-        )
+        (content / "test.md").write_text("---\nname: Test User\nslug: test\n---\n")
         result = runner.invoke(cli, ["publish"])
         assert result.exit_code == 0
         assert "1 contact" in result.output
@@ -152,7 +156,11 @@ class TestTriageCommand:
         )
         result = runner.invoke(cli, ["triage"], input="s\n")
         assert result.exit_code == 0
-        assert "0" in result.output or "skip" in result.output.lower() or "Triaged" in result.output
+        assert (
+            "0" in result.output
+            or "skip" in result.output.lower()
+            or "Triaged" in result.output
+        )
 
     def test_triage_actif(self, runner: CliRunner, jeff_env: Path) -> None:
         """Can mark a contact as actif with relation and priority."""
@@ -233,9 +241,7 @@ class TestGenreCommand:
         """Can quit early."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
-            "---\nname: Test\nslug: test\ngenre:\n---\n"
-        )
+        (content / "test.md").write_text("---\nname: Test\nslug: test\ngenre:\n---\n")
         result = runner.invoke(cli, ["genre"], input="q\n")
         assert result.exit_code == 0
 

@@ -135,7 +135,6 @@ class TestParseVcard:
         assert data["positions"][1]["org"] == "Beta GmbH"
         assert data["positions"][1]["title"] == "Advisor"
 
-
     def test_multiline_address(self) -> None:
         """Multi-line street in ADR produces valid YAML frontmatter."""
         import yaml
@@ -244,12 +243,15 @@ class TestContactToMarkdown:
         assert "status: actif" not in text
 
         # 2. Simulate triage — user sets fields by hand.
-        save_triage(path, {
-            "status": "actif",
-            "relation": "ami",
-            "frequence": "mensuel",
-            "priorite": "haute",
-        })
+        save_triage(
+            path,
+            {
+                "status": "actif",
+                "relation": "ami",
+                "frequence": "mensuel",
+                "priorite": "haute",
+            },
+        )
         text = path.read_text()
         assert "status: actif" in text
         assert "relation: ami" in text
@@ -286,10 +288,13 @@ class TestContactToMarkdown:
         assert "pere:" in path.read_text()
 
         # 2. Edit family links by hand.
-        save_triage(path, {
-            "pere": "jacques-dupont",
-            "conjoint": "marie-dupont",
-        })
+        save_triage(
+            path,
+            {
+                "pere": "jacques-dupont",
+                "conjoint": "marie-dupont",
+            },
+        )
 
         # 3. Re-sync.
         contact_v2 = Contact(

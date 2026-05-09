@@ -7,9 +7,9 @@ from pathlib import Path
 
 from jeff.domain.carddav import CardDAVClient, CardDAVConfig, Contact, SyncState
 from jeff.domain.config import JeffConfig
-from jeff.services.triage import load_contact
 from jeff.domain.transform import contact_to_markdown, parse_vcard
 from jeff.domain.urlback import build_profile_url, inject_crm_url, inject_gender
+from jeff.services.triage import load_contact
 
 
 @dataclass
@@ -125,9 +125,9 @@ def _writeback_gender(
 ) -> int:
     """Write gender back to CardDAV for all contacts that have it set locally.
 
-    Iterates over all local .md files (not just updated contacts) so that
-    running ``jeff genre`` followed by ``jeff sync`` pushes the gender even
-    when no contact changed on the server.
+    Iterates over all local .md files (not just updated contacts) so that running ``jeff
+    genre`` followed by ``jeff sync`` pushes the gender even when no contact changed on
+    the server.
     """
     if not content_dir.is_dir():
         return 0
@@ -160,9 +160,7 @@ def _writeback_gender(
         new_vcard = inject_gender(current_vcard, md_data["genre"])
         if new_vcard is None:
             continue  # Already correct.
-        new_etag = client.put_contact(
-            contact_href, new_vcard, contacts[0].etag
-        )
+        new_etag = client.put_contact(contact_href, new_vcard, contacts[0].etag)
         if new_etag:
             count += 1
             new_state.contacts[contact_href]["etag"] = new_etag

@@ -144,9 +144,7 @@ def build_site(
 
     # Relation display order.
     relation_order = ["famille", "ami", "collegue", "connaissance", "autre"]
-    sorted_groups = [
-        (rel, groups[rel]) for rel in relation_order if rel in groups
-    ]
+    sorted_groups = [(rel, groups[rel]) for rel in relation_order if rel in groups]
 
     # Render index.
     index_html = index_tpl.render(

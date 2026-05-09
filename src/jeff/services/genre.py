@@ -21,7 +21,10 @@ def load_contacts_without_genre(content_dir: Path) -> list[dict[str, Any]]:
 
 
 def apply_genre(data: dict[str, Any], code: str) -> bool:
-    """Apply a genre code (h/f) to a contact. Return True if applied."""
+    """Apply a genre code (h/f) to a contact.
+
+    Return True if applied.
+    """
     genre = GENRE_MAP.get(code)
     if not genre:
         return False
