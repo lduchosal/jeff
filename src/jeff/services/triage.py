@@ -31,7 +31,11 @@ def load_contact(path: Path) -> dict[str, Any] | None:
 
 def save_triage(path: Path, updates: dict[str, str]) -> None:
     """Update triage fields in a contact .md file."""
-    lines = path.read_text(encoding="utf-8").splitlines()
+    # Ensure path is absolute and points to a .md file (no traversal).
+    resolved = path.resolve()
+    if not resolved.suffix == ".md" or not resolved.is_file():
+        return
+    lines = resolved.read_text(encoding="utf-8").splitlines()
 
     # Find frontmatter boundaries.
     if not lines or lines[0].strip() != "---":
@@ -60,7 +64,7 @@ def save_triage(path: Path, updates: dict[str, str]) -> None:
             new_fm_lines.append(f"{k}: {v}")
 
     result = [lines[0]] + new_fm_lines + lines[close_idx:]
-    path.write_text("\n".join(result), encoding="utf-8")
+    resolved.write_text("\n".join(result), encoding="utf-8")
 
 
 def needs_triage(data: dict[str, Any]) -> bool:
