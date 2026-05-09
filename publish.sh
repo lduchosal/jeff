@@ -64,22 +64,27 @@ STEP=0
 
 # Function to print step headers
 print_step() {
+    local label="$1"
     STEP=$((STEP + 1))
     echo ""
     echo "${BLUE}${BOLD}═══════════════════════════════════════════════════════════════${NC}"
-    echo "${BLUE}${BOLD}  $STEP/$STEPS $1${NC}"
+    echo "${BLUE}${BOLD}  $STEP/$STEPS $label${NC}"
     echo "${BLUE}${BOLD}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
+    return 0
 }
 
 # Function to print success message
 print_success() {
-    echo "${GREEN}${BOLD}✓ $1${NC}"
+    local msg="$1"
+    echo "${GREEN}${BOLD}✓ $msg${NC}"
+    return 0
 }
 
 # Function to print error message and exit
 print_error() {
-    echo "${RED}${BOLD}✗ $1${NC}"
+    local msg="$1"
+    echo "${RED}${BOLD}✗ $msg${NC}"
     exit 1
 }
 
@@ -95,6 +100,7 @@ run_command() {
     else
         print_error "$description failed"
     fi
+    return 0
 }
 
 echo "${BOLD}${BLUE}"

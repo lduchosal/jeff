@@ -355,7 +355,7 @@ class TestSync:
             _mock_response(multiget_single),
         ]
         with patch.object(client._session, "request", side_effect=responses):
-            updated, deleted, new_state = client.sync(
+            updated, deleted, _ = client.sync(
                 "/dav.php/addressbooks/user/default/", state
             )
         assert len(updated) == 1

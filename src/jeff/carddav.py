@@ -25,6 +25,10 @@ CS = "http://calendarserver.org/ns/"
 
 _NS = {"d": DAV, "card": CARDDAV, "cs": CS}
 
+# XPath element names reused across methods.
+_D_RESPONSE = "d:response"
+_D_HREF = "d:href"
+
 
 @dataclass
 class Contact:
@@ -111,10 +115,10 @@ class CardDAVClient:
         resp = self._request("PROPFIND", self._config.base_url, body, depth="1")
         tree = etree.fromstring(resp.content)
         books: list[dict[str, str]] = []
-        for response in tree.findall("d:response", _NS):
+        for response in tree.findall(_D_RESPONSE, _NS):
             restype = response.find(".//d:resourcetype/card:addressbook", _NS)
             if restype is not None:
-                href = response.findtext("d:href", "", _NS)
+                href = response.findtext(_D_HREF, "", _NS)
                 name = response.findtext(".//d:displayname", "", _NS)
                 books.append({"href": href, "displayname": name})
         return books
@@ -153,12 +157,12 @@ class CardDAVClient:
         resp = self._request("PROPFIND", url, body, depth="1")
         tree = etree.fromstring(resp.content)
         contacts: dict[str, str] = {}
-        for response in tree.findall("d:response", _NS):
+        for response in tree.findall(_D_RESPONSE, _NS):
             # Skip the addressbook itself (it has a resourcetype).
             restype = response.find(".//d:resourcetype/card:addressbook", _NS)
             if restype is not None:
                 continue
-            href = response.findtext("d:href", "", _NS)
+            href = response.findtext(_D_HREF, "", _NS)
             etag = response.findtext(".//d:getetag", "", _NS).strip('"')
             if href and href.endswith(".vcf"):
                 contacts[href] = etag
@@ -188,8 +192,8 @@ class CardDAVClient:
         resp = self._request("REPORT", url, body, depth="1")
         tree = etree.fromstring(resp.content)
         result: list[Contact] = []
-        for response in tree.findall("d:response", _NS):
-            href = response.findtext("d:href", "", _NS)
+        for response in tree.findall(_D_RESPONSE, _NS):
+            href = response.findtext(_D_HREF, "", _NS)
             etag = response.findtext(".//d:getetag", "", _NS).strip('"')
             vcard_raw = response.findtext(".//card:address-data", "", _NS)
             if href and vcard_raw:

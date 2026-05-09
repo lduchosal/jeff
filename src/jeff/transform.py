@@ -28,7 +28,7 @@ def slugify(text: str) -> str:
     slug = re.sub(r"[òóôõö]", "o", slug)
     slug = re.sub(r"[ùúûü]", "u", slug)
     slug = re.sub(r"[ýÿ]", "y", slug)
-    slug = re.sub(r"[ñ]", "n", slug)
+    slug = re.sub(r"ñ", "n", slug)
     slug = re.sub(r"[çć]", "c", slug)
     slug = re.sub(r"[^a-z0-9]+", "-", slug)
     slug = slug.strip("-")
