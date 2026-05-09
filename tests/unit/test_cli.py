@@ -50,9 +50,9 @@ class TestSyncCommand:
             {"href": "/dav.php/addressbooks/u/default/", "displayname": "Contacts"}
         ]
         with (
-            patch("jeff.cli.CardDAVClient.discover_addressbooks", return_value=books),
+            patch("jeff.services.sync.CardDAVClient.discover_addressbooks", return_value=books),
             patch(
-                "jeff.cli.CardDAVClient.sync",
+                "jeff.services.sync.CardDAVClient.sync",
                 return_value=([], [], SyncState(ctag="c1")),
             ),
         ):
@@ -75,9 +75,9 @@ class TestSyncCommand:
             contacts={"/dav.php/addressbooks/u/default/test.vcf": {"etag": "etag-1"}},
         )
         with (
-            patch("jeff.cli.CardDAVClient.discover_addressbooks", return_value=books),
+            patch("jeff.services.sync.CardDAVClient.discover_addressbooks", return_value=books),
             patch(
-                "jeff.cli.CardDAVClient.sync",
+                "jeff.services.sync.CardDAVClient.sync",
                 return_value=([contact], [], new_state),
             ),
         ):

@@ -6,6 +6,8 @@ Usage::
     jeff sync --full   # force full sync
     jeff publish       # build static HTML site
     jeff triage        # interactive contact triage
+    jeff genre         # set gender on contacts
+    jeff famille       # batch-edit family links
 """
 
 from __future__ import annotations
@@ -16,9 +18,7 @@ from pathlib import Path
 import click
 
 from jeff import __version__
-from jeff.carddav import CardDAVClient, CardDAVConfig, SyncState
 from jeff.config import load_config
-from jeff.transform import contact_to_markdown, parse_vcard
 
 
 @click.group()
@@ -49,133 +49,26 @@ def cli(ctx: click.Context, config_file: str | None, verbose: bool) -> None:
 @click.pass_context
 def sync(ctx: click.Context, full: bool) -> None:
     """Sync contacts from CardDAV to Markdown files."""
+    from jeff.services.sync import run_sync
+
     cfg = ctx.obj["cfg"]
+    result = run_sync(cfg, full=full)
 
-    # Resolve paths relative to .jeff file or cwd.
-    base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
-    state_path = base / cfg.sync_state_path
-    content_dir = base / cfg.content_dir
-    photo_dir = base / cfg.photo_dir
-
-    client = CardDAVClient(
-        CardDAVConfig(
-            url=cfg.carddav_url,
-            username=cfg.carddav_username,
-            password=cfg.carddav_password,
-        )
-    )
-
-    # Discover addressbook.
-    books = client.discover_addressbooks()
-    if not books:
-        click.echo("Error: no addressbooks found.", err=True)
-        sys.exit(1)
-    addressbook_href = books[0]["href"]
-    click.echo(f"Addressbook: {books[0]['displayname']} ({addressbook_href})")
-
-    # Load or reset state.
-    state = SyncState() if full else SyncState.load(state_path)
-
-    # Sync.
-    updated, deleted, new_state = client.sync(addressbook_href, state)
-
-    # Transform updated contacts.
-    written: list[str] = []
-    for contact in updated:
-        path = contact_to_markdown(contact, content_dir, photo_dir)
-        written.append(path.name)
-
-    # Handle deleted contacts (archive by removing the .md file).
-    removed: list[str] = []
-    for href in deleted:
-        # Try to find the slug from old state.
-        old_info = state.contacts.get(href, {})
-        slug = old_info.get("slug")
-        if slug:
-            md_path = content_dir / f"{slug}.md"
-            if md_path.exists():
-                md_path.unlink()
-                removed.append(md_path.name)
-
-    # Enrich state with slugs for future delete detection.
-    for contact in updated:
-        data = parse_vcard(contact.vcard_raw)
-        slug = data.get("slug", "")
-        if contact.href in new_state.contacts:
-            new_state.contacts[contact.href]["slug"] = slug
-
-    # Write CRM URL back to Baikal (if publish_url is configured).
-    url_count = 0
-    if cfg.publish_url and updated:
-        from jeff.urlback import build_profile_url, inject_crm_url
-
-        for contact in updated:
-            data = parse_vcard(contact.vcard_raw)
-            slug = data.get("slug", "")
-            if not slug:
-                continue
-            profile_url = build_profile_url(cfg.publish_url, slug)
-            new_vcard = inject_crm_url(contact.vcard_raw, profile_url)
-            if new_vcard is None:
-                continue  # URL already present.
-            new_etag = client.put_contact(contact.href, new_vcard, contact.etag)
-            if new_etag:
-                url_count += 1
-                # Update state with new etag (PUT changes it).
-                if contact.href in new_state.contacts:
-                    new_state.contacts[contact.href]["etag"] = new_etag
-
-    # Write gender back to Baikal for contacts that have genre set locally.
-    gender_count = 0
-    if updated:
-        from jeff.triage import load_contact as _load_md
-        from jeff.urlback import inject_gender
-
-        for contact in updated:
-            data = parse_vcard(contact.vcard_raw)
-            slug = data.get("slug", "")
-            if not slug:
-                continue
-            md_path = content_dir / f"{slug}.md"
-            if not md_path.exists():
-                continue
-            md_data = _load_md(md_path)
-            if not md_data or not md_data.get("genre"):
-                continue
-            vcard = contact.vcard_raw
-            # Use latest vcard (may have been updated by URL writeback).
-            if contact.href in new_state.contacts:
-                etag = new_state.contacts[contact.href].get("etag", contact.etag)
-            else:
-                etag = contact.etag
-            new_vcard = inject_gender(vcard, md_data["genre"])
-            if new_vcard is None:
-                continue
-            new_etag = client.put_contact(contact.href, new_vcard, etag)
-            if new_etag:
-                gender_count += 1
-                if contact.href in new_state.contacts:
-                    new_state.contacts[contact.href]["etag"] = new_etag
-
-    # Save state.
-    new_state.save(state_path)
-
-    # Report.
-    if not updated and not deleted:
+    if not result.written and not result.removed:
         click.echo("Already up to date.")
     else:
-        if written:
-            click.echo(f"Written: {len(written)} contact(s)")
-            for name in sorted(written):
+        if result.written:
+            click.echo(f"Written: {len(result.written)} contact(s)")
+            for name in sorted(result.written):
                 click.echo(f"  + {name}")
-        if removed:
-            click.echo(f"Removed: {len(removed)} contact(s)")
-            for name in sorted(removed):
+        if result.removed:
+            click.echo(f"Removed: {len(result.removed)} contact(s)")
+            for name in sorted(result.removed):
                 click.echo(f"  - {name}")
-        if url_count:
-            click.echo(f"URL written back: {url_count} contact(s)")
-        if gender_count:
-            click.echo(f"Gender written back: {gender_count} contact(s)")
+        if result.url_count:
+            click.echo(f"URL written back: {result.url_count} contact(s)")
+        if result.gender_count:
+            click.echo(f"Gender written back: {result.gender_count} contact(s)")
 
 
 @cli.command()
@@ -193,7 +86,6 @@ def publish(ctx: click.Context, output: str) -> None:
     photo_dir = base / cfg.photo_dir
     output_dir = base / output
 
-    # Look for contact.css in doc/ui or bundled.
     css_path = base / "doc" / "ui" / "contact.css"
     if not css_path.is_file():
         css_path = None
@@ -243,8 +135,8 @@ def triage(ctx: click.Context, show_all: bool) -> None:
     click.echo("         's' = skip\n")
 
     relation_map = {"a": "ami", "c": "collegue", "f": "famille", "k": "connaissance"}
-    genre_map = {"h": "homme", "f": "femme"}
     priority_map = {"h": "haute", "m": "moyenne", "b": "basse"}
+    genre_map = {"h": "homme", "f": "femme"}
 
     triaged = 0
     for i, data in enumerate(contacts, 1):
@@ -282,7 +174,7 @@ def triage(ctx: click.Context, show_all: bool) -> None:
                 click.echo(f"  ✗ {data['name']} → archivé")
                 break
             else:
-                click.echo("  ? a/r/s/q (ex: 'a a h', 'r', 's')")
+                click.echo("  ? a/r/s/q (ex: 'a f h H', 'r', 's')")
 
     click.echo(f"\nTriaged {triaged} contact(s) this session.")
 
@@ -290,7 +182,7 @@ def triage(ctx: click.Context, show_all: bool) -> None:
 @cli.command()
 @click.pass_context
 def genre(ctx: click.Context) -> None:
-    """Set genre (H/F) on all contacts that don't have one yet."""
+    """Assign gender (H/F) on all contacts that don't have one yet."""
     from jeff.triage import load_contact, save_triage
 
     cfg = ctx.obj["cfg"]
@@ -333,69 +225,15 @@ def genre(ctx: click.Context) -> None:
     click.echo(f"\nSet genre on {edited} contact(s).")
 
 
-def _reciprocal_updates(
-    role: str, source_slug: str, source: dict, target: dict,
-) -> dict[str, str]:
-    """Compute the reciprocal family link update for the target contact.
-
-    Uses source genre to pick pere vs mere when the reciprocal of 'enfants'
-    is needed (i.e. source says target is their child, so target gets
-    pere or mere pointing back to source).
-    """
-    reciprocal: dict[str, str] = {
-        "pere": "enfants",
-        "mere": "enfants",
-        "conjoint": "conjoint",
-        "freres_soeurs": "freres_soeurs",
-    }
-    if role == "enfants":
-        # Source is the parent — use source genre to decide pere/mere.
-        genre = (source.get("genre") or "").lower()
-        rev = "mere" if genre == "femme" else "pere"
-    else:
-        rev = reciprocal.get(role, "")
-    if not rev:
-        return {}
-    if rev in ("enfants", "freres_soeurs"):
-        existing = target.get(rev) or []
-        if isinstance(existing, str):
-            # Parse "[slug1, slug2]" string back to list.
-            stripped = existing.strip("[] ")
-            existing = [s.strip() for s in stripped.split(",") if s.strip()]
-        if source_slug not in existing:
-            existing.append(source_slug)
-        return {rev: f"[{', '.join(existing)}]"}
-    return {rev: source_slug}
-
-
-def _show_existing_links(data: dict) -> None:
-    """Display current family links for a contact."""
-    links = []
-    if data.get("pere"):
-        links.append(f"père: {data['pere']}")
-    if data.get("mere"):
-        links.append(f"mère: {data['mere']}")
-    if data.get("conjoint"):
-        links.append(f"conjoint: {data['conjoint']}")
-    if data.get("freres_soeurs"):
-        fs = data["freres_soeurs"]
-        if isinstance(fs, list):
-            links.append(f"frères/sœurs: {', '.join(fs)}")
-    if data.get("enfants"):
-        enf = data["enfants"]
-        if isinstance(enf, list):
-            links.append(f"enfants: {', '.join(enf)}")
-    if links:
-        for lnk in links:
-            click.echo(f"    ↳ {lnk}")
-    else:
-        click.echo("    ↳ (aucun lien)")
-
-
 @cli.command()
 @click.pass_context
 def famille(ctx: click.Context) -> None:
     """Batch-edit family links for all famille contacts."""
+    from jeff.services.famille import (
+        format_existing_links,
+        merge_list_field,
+        reciprocal_updates,
+    )
     from jeff.triage import load_contact, save_triage
 
     cfg = ctx.obj["cfg"]
@@ -406,7 +244,7 @@ def famille(ctx: click.Context) -> None:
         click.echo("No contacts found.", err=True)
         sys.exit(1)
 
-    # Load all contacts, indexed by slug for reciprocal writes.
+    # Load all contacts.
     all_contacts: list[dict] = []
     by_slug: dict[str, dict] = {}
     for md in sorted(content_dir.glob("*.md")):
@@ -415,8 +253,7 @@ def famille(ctx: click.Context) -> None:
             all_contacts.append(data)
             by_slug[data.get("slug", "")] = data
 
-    # Filter famille contacts. Show all that have relation=famille,
-    # even if they already received reciprocal links.
+    # All famille contacts.
     famille_contacts = [
         c for c in all_contacts if c.get("relation") == "famille"
     ]
@@ -437,7 +274,7 @@ def famille(ctx: click.Context) -> None:
         "c": "enfants", "b": "freres_soeurs",
     }
 
-    click.echo(f"\n{len(famille_contacts)} famille contacts to edit\n")
+    click.echo(f"\n{len(famille_contacts)} famille contacts\n")
 
     edited = 0
     for idx, contact in enumerate(famille_contacts, 1):
@@ -450,7 +287,12 @@ def famille(ctx: click.Context) -> None:
 
         genre_label = f" ({contact.get('genre')})" if contact.get("genre") else ""
         click.echo(f"── [{idx}/{len(famille_contacts)}] {contact.get('name')}{genre_label} ──")
-        _show_existing_links(contact)
+        links = format_existing_links(contact)
+        if links:
+            for lnk in links:
+                click.echo(f"    ↳ {lnk}")
+        else:
+            click.echo("    ↳ (aucun lien)")
         click.echo()
         if candidates:
             for n, c in enumerate(candidates, 1):
@@ -471,7 +313,7 @@ def famille(ctx: click.Context) -> None:
             if not raw:
                 break
 
-            # Search mode: ?query
+            # Search mode.
             if raw.startswith("?"):
                 query = raw[1:].strip().lower()
                 if not query:
@@ -483,7 +325,8 @@ def famille(ctx: click.Context) -> None:
                 ]
                 if candidates:
                     for n, c in enumerate(candidates, 1):
-                        click.echo(f"    {n}. {c.get('name')}")
+                        g = f" ({c.get('genre')})" if c.get("genre") else ""
+                        click.echo(f"    {n}. {c.get('name')}{g}")
                 else:
                     click.echo(f"    aucun résultat pour '{query}'")
                 click.echo()
@@ -519,8 +362,7 @@ def famille(ctx: click.Context) -> None:
                     siblings.append(target_slug)
                 else:
                     updates[role] = target_slug
-                # Prepare reciprocal update.
-                rev = _reciprocal_updates(role, slug, contact, target)
+                rev = reciprocal_updates(role, slug, contact, target)
                 if rev:
                     reciprocals.append((target, rev))
 
@@ -528,30 +370,16 @@ def famille(ctx: click.Context) -> None:
                 continue
 
             if children:
-                existing_c = contact.get("enfants") or []
-                if isinstance(existing_c, str):
-                    existing_c = [s.strip() for s in existing_c.strip("[] ").split(",") if s.strip()]
-                for c in children:
-                    if c not in existing_c:
-                        existing_c.append(c)
-                updates["enfants"] = f"[{', '.join(existing_c)}]"
+                updates["enfants"] = merge_list_field(contact, "enfants", children)
             if siblings:
-                existing_s = contact.get("freres_soeurs") or []
-                if isinstance(existing_s, str):
-                    existing_s = [s.strip() for s in existing_s.strip("[] ").split(",") if s.strip()]
-                for s in siblings:
-                    if s not in existing_s:
-                        existing_s.append(s)
-                updates["freres_soeurs"] = f"[{', '.join(existing_s)}]"
+                updates["freres_soeurs"] = merge_list_field(contact, "freres_soeurs", siblings)
 
             if updates:
-                # Save on current contact and update in-memory data.
                 save_triage(contact["_path"], updates)
                 for k, v in updates.items():
                     contact[k] = v
                 summary = " ".join(f"{k}={v}" for k, v in updates.items())
                 click.echo(f"  ✓ {contact.get('name')}: {summary}")
-                # Save reciprocals and update in-memory data.
                 for target, rev_updates in reciprocals:
                     target_path = target.get("_path")
                     if target_path:

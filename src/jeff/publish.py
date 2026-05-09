@@ -132,14 +132,15 @@ def build_site(
         groups.setdefault(rel, []).append(_DotDict(c))
 
     # Stats for the dashboard.
+    by_priority: dict[str, int] = {}
+    for c in contacts:
+        p = c.get("priorite") or "non définie"
+        by_priority[p] = by_priority.get(p, 0) + 1
     stats = {
         "total": len(contacts),
         "by_relation": {rel: len(lst) for rel, lst in groups.items()},
-        "by_priority": {},
+        "by_priority": by_priority,
     }
-    for c in contacts:
-        p = c.get("priorite") or "non définie"
-        stats["by_priority"][p] = stats["by_priority"].get(p, 0) + 1
 
     # Relation display order.
     relation_order = ["famille", "ami", "collegue", "connaissance", "autre"]
