@@ -247,3 +247,58 @@ def triage(ctx: click.Context, show_all: bool) -> None:
                 click.echo("  ? a/r/s/q (ex: 'a a h', 'r', 's')")
 
     click.echo(f"\nTriaged {triaged} contact(s) this session.")
+
+
+@cli.command()
+@click.argument("slug")
+@click.pass_context
+def famille(ctx: click.Context, slug: str) -> None:
+    """Edit family links for a contact interactively."""
+    from jeff.triage import load_contact, save_triage
+
+    cfg = ctx.obj["cfg"]
+    base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
+    content_dir = base / cfg.content_dir
+
+    md_path = content_dir / f"{slug}.md"
+    if not md_path.exists():
+        click.echo(f"Contact '{slug}' not found.", err=True)
+        sys.exit(1)
+
+    data = load_contact(md_path)
+    if not data:
+        click.echo(f"Could not parse '{slug}'.", err=True)
+        sys.exit(1)
+
+    click.echo(f"\n  {data.get('name', slug)}")
+    click.echo(f"  pere: {data.get('pere', '')}")
+    click.echo(f"  mere: {data.get('mere', '')}")
+    click.echo(f"  conjoint: {data.get('conjoint', '')}")
+    click.echo(f"  freres_soeurs: {data.get('freres_soeurs', [])}")
+    click.echo(f"  enfants: {data.get('enfants', [])}")
+    click.echo()
+    click.echo("Enter slug for each field (empty = no change, - = clear):")
+
+    updates: dict[str, str] = {}
+    for field in ("pere", "mere", "conjoint"):
+        val = click.prompt(f"  {field}", default="", show_default=False).strip()
+        if val == "-":
+            updates[field] = ""
+        elif val:
+            updates[field] = val
+
+    for field in ("freres_soeurs", "enfants"):
+        val = click.prompt(
+            f"  {field} (comma-separated)", default="", show_default=False
+        ).strip()
+        if val == "-":
+            updates[field] = "[]"
+        elif val:
+            slugs = [s.strip() for s in val.split(",") if s.strip()]
+            updates[field] = f"[{', '.join(slugs)}]"
+
+    if updates:
+        save_triage(md_path, updates)
+        click.echo(f"\n  ✓ {data.get('name', slug)} updated")
+    else:
+        click.echo("\n  No changes.")
