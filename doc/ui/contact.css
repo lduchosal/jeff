@@ -485,6 +485,8 @@ body {
 .stat-badge--ami { background: #dbeafe; color: #1e40af; }
 .stat-badge--collegue { background: #e0e7ff; color: #3730a3; }
 .stat-badge--connaissance { background: #f3f4f6; color: #4b5563; }
+.stat-badge--homme { background: #dbeafe; color: #1e40af; }
+.stat-badge--femme { background: #fce7f3; color: #9d174d; }
 .stat-badge--haute { background: #fee2e2; color: #991b1b; }
 .stat-badge--moyenne { background: #fef9c3; color: #854d0e; }
 .stat-badge--basse { background: #ecfdf5; color: #065f46; }
@@ -565,6 +567,17 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.genre-icon {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.genre-icon--homme { background: #3b82f6; }
+.genre-icon--femme { background: #ec4899; }
 
 .contact-card__note {
   font-size: var(--text-xs);
