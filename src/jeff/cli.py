@@ -250,55 +250,116 @@ def triage(ctx: click.Context, show_all: bool) -> None:
 
 
 @cli.command()
-@click.argument("slug")
 @click.pass_context
-def famille(ctx: click.Context, slug: str) -> None:
-    """Edit family links for a contact interactively."""
+def famille(ctx: click.Context) -> None:
+    """Batch-edit family links for all famille contacts.
+
+    Shows same-surname contacts numbered, then type e.g. '1f 2m 3w 4c 5b':
+    f=father m=mother w=wife/husband c=child b=brother/sister
+    """
     from jeff.triage import load_contact, save_triage
 
     cfg = ctx.obj["cfg"]
     base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
     content_dir = base / cfg.content_dir
 
-    md_path = content_dir / f"{slug}.md"
-    if not md_path.exists():
-        click.echo(f"Contact '{slug}' not found.", err=True)
+    if not content_dir.is_dir():
+        click.echo("No contacts found.", err=True)
         sys.exit(1)
 
-    data = load_contact(md_path)
-    if not data:
-        click.echo(f"Could not parse '{slug}'.", err=True)
-        sys.exit(1)
+    # Load all contacts.
+    all_contacts: list[dict] = []
+    for md in sorted(content_dir.glob("*.md")):
+        data = load_contact(md)
+        if data and data.get("name"):
+            all_contacts.append(data)
 
-    click.echo(f"\n  {data.get('name', slug)}")
-    click.echo(f"  pere: {data.get('pere', '')}")
-    click.echo(f"  mere: {data.get('mere', '')}")
-    click.echo(f"  conjoint: {data.get('conjoint', '')}")
-    click.echo(f"  freres_soeurs: {data.get('freres_soeurs', [])}")
-    click.echo(f"  enfants: {data.get('enfants', [])}")
-    click.echo()
-    click.echo("Enter slug for each field (empty = no change, - = clear):")
+    # Filter famille contacts that need editing.
+    famille_contacts = [
+        c for c in all_contacts
+        if c.get("relation") == "famille"
+        and not c.get("pere") and not c.get("mere")
+        and not c.get("conjoint") and not c.get("enfants")
+        and not c.get("freres_soeurs")
+    ]
 
-    updates: dict[str, str] = {}
-    for field in ("pere", "mere", "conjoint"):
-        val = click.prompt(f"  {field}", default="", show_default=False).strip()
-        if val == "-":
-            updates[field] = ""
-        elif val:
-            updates[field] = val
+    if not famille_contacts:
+        click.echo("All famille contacts have links set.")
+        return
 
-    for field in ("freres_soeurs", "enfants"):
-        val = click.prompt(
-            f"  {field} (comma-separated)", default="", show_default=False
-        ).strip()
-        if val == "-":
-            updates[field] = "[]"
-        elif val:
-            slugs = [s.strip() for s in val.split(",") if s.strip()]
-            updates[field] = f"[{', '.join(slugs)}]"
+    # Build surname index.
+    by_surname: dict[str, list[dict]] = {}
+    for c in all_contacts:
+        surname = (c.get("name_family") or "").strip().lower()
+        if surname:
+            by_surname.setdefault(surname, []).append(c)
 
-    if updates:
-        save_triage(md_path, updates)
-        click.echo(f"\n  ✓ {data.get('name', slug)} updated")
-    else:
-        click.echo("\n  No changes.")
+    role_map = {
+        "f": "pere", "m": "mere", "w": "conjoint",
+        "c": "enfants", "b": "freres_soeurs",
+    }
+
+    click.echo(f"\n{len(famille_contacts)} famille contacts to edit")
+    click.echo("Codes: f=father m=mother w=wife/husband c=child b=brother/sister")
+    click.echo("Example: 1f 2m 3w 4c    Enter=skip  q=quit\n")
+
+    edited = 0
+    for idx, contact in enumerate(famille_contacts, 1):
+        surname = (contact.get("name_family") or "").strip().lower()
+        slug = contact.get("slug", "")
+        same_family = [
+            c for c in by_surname.get(surname, [])
+            if c.get("slug") != slug
+        ]
+
+        click.echo(f"── [{idx}/{len(famille_contacts)}] {contact.get('name')} ──")
+        if same_family:
+            for n, c in enumerate(same_family, 1):
+                click.echo(f"    {n}. {c.get('name')}")
+        else:
+            click.echo("    (no same-surname contacts found)")
+        click.echo()
+
+        raw = click.prompt("  >", default="").strip().lower()
+        if raw == "q":
+            break
+        if not raw:
+            continue
+
+        # Parse tokens like "1f 2m 3w 4c 5b"
+        updates: dict[str, str] = {}
+        children: list[str] = []
+        siblings: list[str] = []
+        for token in raw.split():
+            if len(token) < 2:
+                continue
+            num_str = token[:-1]
+            code = token[-1]
+            if not num_str.isdigit() or code not in role_map:
+                click.echo(f"    ? invalid: {token}")
+                continue
+            n = int(num_str)
+            if n < 1 or n > len(same_family):
+                click.echo(f"    ? out of range: {token}")
+                continue
+            target_slug = same_family[n - 1].get("slug", "")
+            role = role_map[code]
+            if role == "enfants":
+                children.append(target_slug)
+            elif role == "freres_soeurs":
+                siblings.append(target_slug)
+            else:
+                updates[role] = target_slug
+
+        if children:
+            updates["enfants"] = f"[{', '.join(children)}]"
+        if siblings:
+            updates["freres_soeurs"] = f"[{', '.join(siblings)}]"
+
+        if updates:
+            save_triage(contact["_path"], updates)
+            summary = " ".join(f"{k}={v}" for k, v in updates.items())
+            click.echo(f"  ✓ {summary}")
+            edited += 1
+
+    click.echo(f"\nEdited {edited} contact(s).")
