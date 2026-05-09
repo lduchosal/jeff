@@ -333,17 +333,14 @@ def famille(ctx: click.Context) -> None:
             all_contacts.append(data)
             by_slug[data.get("slug", "")] = data
 
-    # Filter famille contacts that need editing.
+    # Filter famille contacts. Show all that have relation=famille,
+    # even if they already received reciprocal links.
     famille_contacts = [
-        c for c in all_contacts
-        if c.get("relation") == "famille"
-        and not c.get("pere") and not c.get("mere")
-        and not c.get("conjoint") and not c.get("enfants")
-        and not c.get("freres_soeurs")
+        c for c in all_contacts if c.get("relation") == "famille"
     ]
 
     if not famille_contacts:
-        click.echo("All famille contacts have links set.")
+        click.echo("No famille contacts found.")
         return
 
     # Build surname index.
@@ -454,15 +451,19 @@ def famille(ctx: click.Context) -> None:
                 updates["freres_soeurs"] = f"[{', '.join(siblings)}]"
 
             if updates:
-                # Save on current contact.
+                # Save on current contact and update in-memory data.
                 save_triage(contact["_path"], updates)
+                for k, v in updates.items():
+                    contact[k] = v
                 summary = " ".join(f"{k}={v}" for k, v in updates.items())
                 click.echo(f"  ✓ {contact.get('name')}: {summary}")
-                # Save reciprocals.
+                # Save reciprocals and update in-memory data.
                 for target, rev_updates in reciprocals:
                     target_path = target.get("_path")
                     if target_path:
                         save_triage(target_path, rev_updates)
+                        for k, v in rev_updates.items():
+                            target[k] = v
                         rev_summary = " ".join(
                             f"{k}={v}" for k, v in rev_updates.items()
                         )
