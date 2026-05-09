@@ -27,6 +27,13 @@
           <p class="contact-title">{{ contact.positions[0].title or '' }}</p>
           <p class="contact-org">{{ contact.positions[0].org or '' }}</p>
         {% endif %}
+        {% if contact.relation or contact.priorite or contact.frequence %}
+        <div class="contact-triage">
+          {% if contact.relation %}<span class="stat-badge stat-badge--{{ contact.relation }}">{{ contact.relation | title }}</span>{% endif %}
+          {% if contact.priorite %}<span class="stat-badge stat-badge--{{ contact.priorite }}">{{ contact.priorite | title }}</span>{% endif %}
+          {% if contact.frequence %}<span class="stat-badge">{{ contact.frequence | title }}</span>{% endif %}
+        </div>
+        {% endif %}
       </div>
     </header>
 

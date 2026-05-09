@@ -125,9 +125,33 @@ def build_site(
         _log.debug("Render %s.html", slug)
         (contacts_out / f"{slug}.html").write_text(html, encoding="utf-8")
 
+    # Group contacts by relation for the dashboard.
+    groups: dict[str, list[_DotDict]] = {}
+    for c in contacts:
+        rel = c.get("relation") or "autre"
+        groups.setdefault(rel, []).append(_DotDict(c))
+
+    # Stats for the dashboard.
+    stats = {
+        "total": len(contacts),
+        "by_relation": {rel: len(lst) for rel, lst in groups.items()},
+        "by_priority": {},
+    }
+    for c in contacts:
+        p = c.get("priorite") or "non définie"
+        stats["by_priority"][p] = stats["by_priority"].get(p, 0) + 1
+
+    # Relation display order.
+    relation_order = ["famille", "ami", "collegue", "connaissance", "autre"]
+    sorted_groups = [
+        (rel, groups[rel]) for rel in relation_order if rel in groups
+    ]
+
     # Render index.
     index_html = index_tpl.render(
         contacts=[_DotDict(c) for c in contacts],
+        groups=sorted_groups,
+        stats=stats,
     )
     (output_dir / "index.html").write_text(index_html, encoding="utf-8")
 

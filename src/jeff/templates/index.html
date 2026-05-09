@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contacts</title>
+  <title>Contacts — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -16,27 +16,58 @@
   <header class="contact-header" style="border-bottom: none; padding-bottom: 0;">
     <div class="contact-header__info">
       <h1 class="contact-name">Contacts</h1>
-      <p class="contact-title">{{ contacts | length }} contact{{ 's' if contacts | length != 1 }}</p>
+      <p class="contact-title">{{ stats.total }} contact{{ 's' if stats.total != 1 }}</p>
     </div>
   </header>
 
-  <div style="margin-top: var(--space-4);">
-    {% for contact in contacts %}
-    <a class="related-contact" href="contacts/{{ contact.slug }}.html">
-      {% if contact.photo %}
-        <img class="related-contact__avatar" src="{{ contact.photo }}" alt="">
-      {% else %}
-        <div class="related-contact__avatar" aria-hidden="true"></div>
-      {% endif %}
-      <div class="related-contact__info">
-        <div class="related-contact__name">{{ contact.name }}</div>
-        <div class="related-contact__role">
-          {%- if contact.tags %}{{ contact.tags | join(', ') }}{% endif -%}
-        </div>
-      </div>
-    </a>
+  <div class="dashboard-stats">
+    {% for rel, count in stats.by_relation.items() %}
+      <span class="stat-badge stat-badge--{{ rel }}">{{ rel | title }} {{ count }}</span>
+    {% endfor %}
+    <span class="stat-badge stat-badge--sep">|</span>
+    {% for pri, count in stats.by_priority.items() %}
+      <span class="stat-badge stat-badge--{{ pri }}">{{ pri | title }} {{ count }}</span>
     {% endfor %}
   </div>
+
+  {% for relation, group_contacts in groups %}
+  <section class="dashboard-section">
+    <h2 class="dashboard-section__title">
+      {{ relation | title }}
+      <span class="dashboard-section__count">{{ group_contacts | length }}</span>
+    </h2>
+    <div class="dashboard-grid">
+      {% for contact in group_contacts %}
+      <a class="contact-card" href="contacts/{{ contact.slug }}.html">
+        {% if contact.photo %}
+          <img class="contact-card__avatar" src="{{ contact.photo }}" alt="">
+        {% else %}
+          <div class="contact-card__avatar" aria-hidden="true">{{ contact.name[:1] }}</div>
+        {% endif %}
+        <div class="contact-card__body">
+          <div class="contact-card__name">{{ contact.name }}</div>
+          {% if contact.note %}
+            <div class="contact-card__note">{{ contact.note[:60] }}{{ '...' if contact.note | length > 60 }}</div>
+          {% endif %}
+          {% if contact.tags %}
+            <div class="contact-card__tags">
+              {% for tag in contact.tags[:4] %}
+                <span class="tag tag--small">{{ tag }}</span>
+              {% endfor %}
+              {% if contact.tags | length > 4 %}
+                <span class="tag tag--small tag--more">+{{ contact.tags | length - 4 }}</span>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+        {% if contact.priorite %}
+          <span class="priority-dot priority-dot--{{ contact.priorite }}"></span>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
 
 </div>
 
