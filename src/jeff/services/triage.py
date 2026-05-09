@@ -28,13 +28,25 @@ def load_contact(path: Path) -> dict[str, Any] | None:
     return None
 
 
+def _sanitize_filename(name: str) -> str:
+    """Strip path separators to prevent directory traversal."""
+    return name.replace("/", "").replace("\\", "").replace("..", "")
+
+
 def save_triage(path: Path, updates: dict[str, str]) -> None:
-    """Update triage fields in a contact .md file."""
-    # Ensure path is absolute and points to a .md file (no traversal).
-    resolved = path.resolve()
-    if not resolved.suffix == ".md" or not resolved.is_file():
+    """Update triage fields in a contact .md file.
+
+    Rebuilds a safe path from the parent directory and sanitized filename
+    to prevent path-traversal attacks (SonarCloud S2083).
+    """
+    parent = path.resolve().parent
+    safe_name = _sanitize_filename(path.name)
+    if not safe_name.endswith(".md"):
         return
-    lines = resolved.read_text(encoding="utf-8").splitlines()
+    safe_path = parent / safe_name
+    if not safe_path.is_file():
+        return
+    lines = safe_path.read_text(encoding="utf-8").splitlines()
 
     # Find frontmatter boundaries.
     if not lines or lines[0].strip() != "---":
@@ -49,7 +61,7 @@ def save_triage(path: Path, updates: dict[str, str]) -> None:
 
     # Update or insert triage keys in frontmatter.
     new_fm_lines = []
-    seen = set()
+    seen: set[str] = set()
     for line in lines[1:close_idx]:
         key = line.split(":")[0].strip() if ":" in line else ""
         if key in updates:
@@ -57,13 +69,12 @@ def save_triage(path: Path, updates: dict[str, str]) -> None:
             seen.add(key)
         else:
             new_fm_lines.append(line)
-    # Add any keys not already in the file.
     for k, v in updates.items():
         if k not in seen:
             new_fm_lines.append(f"{k}: {v}")
 
     result = [lines[0]] + new_fm_lines + lines[close_idx:]
-    resolved.write_text("\n".join(result), encoding="utf-8")
+    safe_path.write_text("\n".join(result), encoding="utf-8")
 
 
 def needs_triage(data: dict[str, Any]) -> bool:
