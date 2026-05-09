@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 
-from jeff.carddav import Contact, SyncState
+from jeff.domain.carddav import Contact, SyncState
 from jeff.cli import cli
 
 SAMPLE_VCARD = """\

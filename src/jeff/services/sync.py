@@ -5,11 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from jeff.carddav import CardDAVClient, CardDAVConfig, Contact, SyncState
-from jeff.config import JeffConfig
-from jeff.triage import load_contact
-from jeff.transform import contact_to_markdown, parse_vcard
-from jeff.urlback import build_profile_url, inject_crm_url, inject_gender
+from jeff.domain.carddav import CardDAVClient, CardDAVConfig, Contact, SyncState
+from jeff.domain.config import JeffConfig
+from jeff.services.triage import load_contact
+from jeff.domain.transform import contact_to_markdown, parse_vcard
+from jeff.domain.urlback import build_profile_url, inject_crm_url, inject_gender
 
 
 @dataclass
@@ -144,22 +144,26 @@ def _writeback_gender(
         if not md_data or not md_data.get("genre"):
             continue
         slug = md_data.get("slug", "")
-        href = slug_to_href.get(slug)
-        if not href:
+        contact_href = slug_to_href.get(slug)
+        if not contact_href:
             continue
-        etag = new_state.contacts[href].get("etag", "")
+        etag = new_state.contacts[contact_href].get("etag", "")
         if not etag:
             continue
         # Fetch current vCard to check if gender already set.
-        contacts = client.fetch_contacts(href.rsplit("/", 1)[0] + "/", [href])
+        contacts = client.fetch_contacts(
+            contact_href.rsplit("/", 1)[0] + "/", [contact_href]
+        )
         if not contacts:
             continue
         current_vcard = contacts[0].vcard_raw
         new_vcard = inject_gender(current_vcard, md_data["genre"])
         if new_vcard is None:
             continue  # Already correct.
-        new_etag = client.put_contact(href, new_vcard, contacts[0].etag)
+        new_etag = client.put_contact(
+            contact_href, new_vcard, contacts[0].etag
+        )
         if new_etag:
             count += 1
-            new_state.contacts[href]["etag"] = new_etag
+            new_state.contacts[contact_href]["etag"] = new_etag
     return count

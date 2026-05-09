@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from jeff.carddav import CardDAVClient, CardDAVConfig, SyncState
+from jeff.domain.carddav import CardDAVClient, CardDAVConfig, SyncState
 
 # -- Fixtures ----------------------------------------------------------------
 

@@ -18,7 +18,7 @@ from pathlib import Path
 import click
 
 from jeff import __version__
-from jeff.config import load_config
+from jeff.domain.config import load_config
 
 
 @click.group()
@@ -78,7 +78,7 @@ def sync(ctx: click.Context, full: bool) -> None:
 @click.pass_context
 def publish(ctx: click.Context, output: str) -> None:
     """Build a static HTML site from synced Markdown contacts."""
-    from jeff.publish import build_site
+    from jeff.services.publish import build_site
 
     cfg = ctx.obj["cfg"]
     base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
@@ -99,7 +99,7 @@ def publish(ctx: click.Context, output: str) -> None:
 @click.pass_context
 def triage(ctx: click.Context, show_all: bool) -> None:
     """Interactive triage of contacts."""
-    from jeff.triage import format_summary, load_contact, needs_triage, save_triage
+    from jeff.services.triage import format_summary, load_contact, needs_triage, save_triage
 
     cfg = ctx.obj["cfg"]
     base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
@@ -183,7 +183,7 @@ def triage(ctx: click.Context, show_all: bool) -> None:
 @click.pass_context
 def genre(ctx: click.Context) -> None:
     """Assign gender (H/F) on all contacts that don't have one yet."""
-    from jeff.triage import load_contact, save_triage
+    from jeff.services.triage import load_contact, save_triage
 
     cfg = ctx.obj["cfg"]
     base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
@@ -234,7 +234,7 @@ def famille(ctx: click.Context) -> None:
         merge_list_field,
         reciprocal_updates,
     )
-    from jeff.triage import load_contact, save_triage
+    from jeff.services.triage import load_contact, save_triage
 
     cfg = ctx.obj["cfg"]
     base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()

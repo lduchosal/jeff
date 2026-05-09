@@ -13,7 +13,7 @@ from typing import Any
 
 import vobject
 
-from jeff.carddav import Contact
+from jeff.domain.carddav import Contact
 from jeff.log import get_logger
 
 _log = get_logger("transform")

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jeff.carddav import Contact
-from jeff.transform import (
+from jeff.domain.carddav import Contact
+from jeff.domain.transform import (
     contact_to_markdown,
     parse_vcard,
     render_frontmatter,
@@ -227,7 +227,7 @@ class TestContactToMarkdown:
 
     def test_resync_preserves_triage_fields(self, tmp_path: Path) -> None:
         """Triage fields survive a re-sync (sync → triage → sync)."""
-        from jeff.triage import save_triage
+        from jeff.services.triage import save_triage
 
         contact = Contact(
             href="/contact.vcf",
@@ -271,7 +271,7 @@ class TestContactToMarkdown:
 
     def test_resync_preserves_family_links(self, tmp_path: Path) -> None:
         """Family link fields survive a re-sync."""
-        from jeff.triage import save_triage
+        from jeff.services.triage import save_triage
 
         contact = Contact(
             href="/contact.vcf",

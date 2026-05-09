@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jeff.publish import _parse_frontmatter, build_site
+from jeff.services.publish import _parse_frontmatter, build_site
 
 SAMPLE_MD = """\
 ---

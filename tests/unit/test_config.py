@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jeff.config import JeffConfig, _parse_jeff_file, load_config
+from jeff.domain.config import JeffConfig, _parse_jeff_file, load_config
 
 
 class TestParseJeffFile:

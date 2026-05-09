@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from jeff.urlback import build_profile_url, inject_crm_url, inject_gender
+from jeff.domain.urlback import build_profile_url, inject_crm_url, inject_gender
 
 SAMPLE_VCARD = """\
 BEGIN:VCARD
