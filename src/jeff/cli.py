@@ -279,7 +279,9 @@ def _reciprocal_updates(
     if rev in ("enfants", "freres_soeurs"):
         existing = target.get(rev) or []
         if isinstance(existing, str):
-            existing = [existing]
+            # Parse "[slug1, slug2]" string back to list.
+            stripped = existing.strip("[] ")
+            existing = [s.strip() for s in stripped.split(",") if s.strip()]
         if source_slug not in existing:
             existing.append(source_slug)
         return {rev: f"[{', '.join(existing)}]"}
@@ -446,9 +448,21 @@ def famille(ctx: click.Context) -> None:
                 continue
 
             if children:
-                updates["enfants"] = f"[{', '.join(children)}]"
+                existing_c = contact.get("enfants") or []
+                if isinstance(existing_c, str):
+                    existing_c = [s.strip() for s in existing_c.strip("[] ").split(",") if s.strip()]
+                for c in children:
+                    if c not in existing_c:
+                        existing_c.append(c)
+                updates["enfants"] = f"[{', '.join(existing_c)}]"
             if siblings:
-                updates["freres_soeurs"] = f"[{', '.join(siblings)}]"
+                existing_s = contact.get("freres_soeurs") or []
+                if isinstance(existing_s, str):
+                    existing_s = [s.strip() for s in existing_s.strip("[] ").split(",") if s.strip()]
+                for s in siblings:
+                    if s not in existing_s:
+                        existing_s.append(s)
+                updates["freres_soeurs"] = f"[{', '.join(existing_s)}]"
 
             if updates:
                 # Save on current contact and update in-memory data.
