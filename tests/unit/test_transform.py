@@ -224,3 +224,47 @@ class TestContactToMarkdown:
         text = path.read_text()
         assert "name: Marie" in text
         assert "emails:" not in text
+
+    def test_resync_preserves_triage_fields(self, tmp_path: Path) -> None:
+        """Triage fields survive a re-sync (sync → triage → sync)."""
+        from jeff.triage import save_triage
+
+        contact = Contact(
+            href="/contact.vcf",
+            etag="etag-1",
+            vcard_raw=VCARD_FULL,
+        )
+        content_dir = tmp_path / "content" / "contacts"
+        photo_dir = tmp_path / "static" / "photos"
+
+        # 1. First sync — creates the .md with empty triage fields.
+        path = contact_to_markdown(contact, content_dir, photo_dir)
+        text = path.read_text()
+        assert "status:" in text
+        assert "status: actif" not in text
+
+        # 2. Simulate triage — user sets fields by hand.
+        save_triage(path, {
+            "status": "actif",
+            "relation": "ami",
+            "frequence": "mensuel",
+            "priorite": "haute",
+        })
+        text = path.read_text()
+        assert "status: actif" in text
+        assert "relation: ami" in text
+
+        # 3. Re-sync — same contact, new etag (simulating a server update).
+        contact_v2 = Contact(
+            href="/contact.vcf",
+            etag="etag-2",
+            vcard_raw=VCARD_FULL,
+        )
+        path = contact_to_markdown(contact_v2, content_dir, photo_dir)
+
+        # 4. Triage fields must be preserved.
+        text = path.read_text()
+        assert "status: actif" in text
+        assert "relation: ami" in text
+        assert "frequence: mensuel" in text
+        assert "priorite: haute" in text
