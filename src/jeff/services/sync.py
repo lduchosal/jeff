@@ -28,6 +28,7 @@ class SyncResult:
 
     written: list[str]
     removed: list[str]
+    deleted_remote: list[str]
     url_count: int
     gender_count: int
     error: str = ""
@@ -60,9 +61,9 @@ def run_sync(
         books = client.discover_addressbooks()
     except requests.ConnectionError:
         log("Error: no internet connection. Sync skipped.")
-        return SyncResult([], [], 0, 0, error="no connection")
+        return SyncResult([], [], [], 0, 0, error="no connection")
     if not books:
-        return SyncResult([], [], 0, 0)
+        return SyncResult([], [], [], 0, 0)
     addressbook_href = books[0]["href"]
     log(f"Addressbook: {books[0]['displayname']}")
 
@@ -111,12 +112,38 @@ def run_sync(
         log("Writing back gender...")
         gender_count = _writeback_gender(client, new_state, content_dir, log)
 
+    # Delete contacts marked as 'supprimé' from CardDAV.
+    deleted_remote: list[str] = []
+    slug_to_href: dict[str, str] = {}
+    for href, info in new_state.contacts.items():
+        s = info.get("slug", "")
+        if s:
+            slug_to_href[s] = href
+    for md_path in sorted(content_dir.glob("*.md")):
+        md_data = load_contact(md_path)
+        if not md_data or md_data.get("status") != "supprimé":
+            continue
+        slug = md_data.get("slug", "")
+        name = md_data.get("name", slug)
+        del_href = slug_to_href.get(slug)
+        if not del_href:
+            continue
+        etag = new_state.contacts[del_href].get("etag", "")
+        if not etag:
+            continue
+        log(f"  Deleting {name} from CardDAV...")
+        if client.delete_contact(del_href, etag):
+            deleted_remote.append(name)
+            del new_state.contacts[del_href]
+            md_path.unlink()
+
     # Save state.
     new_state.save(state_path)
 
     return SyncResult(
         written=written,
         removed=removed,
+        deleted_remote=deleted_remote,
         url_count=url_count,
         gender_count=gender_count,
     )

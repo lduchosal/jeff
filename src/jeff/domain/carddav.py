@@ -269,6 +269,23 @@ class CardDAVClient:
         new_etag = resp.headers.get("ETag", "").strip('"')
         return new_etag or None
 
+    def delete_contact(self, href: str, etag: str) -> bool:
+        """Delete a contact on the server via DELETE.
+
+        Uses ``If-Match`` for optimistic locking. Returns True on success.
+        """
+        url = self._absolute(href)
+        _log.debug("DELETE %s (If-Match: %s)", href, etag)
+        headers = {"If-Match": f'"{etag}"'}
+        resp = self._session.delete(url, headers=headers)
+        if resp.status_code in (204, 200):
+            return True
+        if resp.status_code == 412:
+            _log.warning("DELETE conflict for %s", href)
+            return False
+        resp.raise_for_status()
+        return True
+
     def _absolute(self, href: str) -> str:
         """Resolve a relative href to an absolute URL."""
         if href.startswith("http"):

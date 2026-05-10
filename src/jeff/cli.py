@@ -83,6 +83,10 @@ def sync(ctx: click.Context, full: bool, writeback_gender: bool) -> None:
             click.echo(f"URL written back: {result.url_count} contact(s)")
         if result.gender_count:
             click.echo(f"Gender written back: {result.gender_count} contact(s)")
+        if result.deleted_remote:
+            click.echo(f"Deleted from CardDAV: {len(result.deleted_remote)} contact(s)")
+            for name in sorted(result.deleted_remote):
+                click.echo(f"  ✗ {name}")
 
 
 @cli.command()
@@ -306,7 +310,7 @@ def delete_cmd(ctx: click.Context) -> None:
             break
         if raw == "d":
             marked.append(data)
-            click.echo(f"    ✗ marked for deletion")
+            click.echo("    ✗ marked for deletion")
 
     if not marked:
         click.echo("\nNo contacts marked.")
