@@ -98,6 +98,54 @@ def publish(ctx: click.Context, output: str) -> None:
 
 
 @cli.command()
+@click.option("--full", is_flag=True, help="Force full sync.")
+@click.option(
+    "--output", "-o", default="public", help="Output directory (default: public)."
+)
+@click.pass_context
+def cron(ctx: click.Context, full: bool, output: str) -> None:
+    """Daily cron job: sync + birthdays + publish."""
+    from jeff.services.birthday import find_birthdays, record_birthday_exchange
+    from jeff.services.publish import build_site
+    from jeff.services.sync import run_sync
+
+    cfg = ctx.obj["cfg"]
+    base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
+    content_dir = _content_dir(ctx)
+
+    # 1. Sync.
+    click.echo("── Sync ──")
+    result = run_sync(cfg, full=full, progress=click.echo)
+    if result.written:
+        click.echo(f"Written: {len(result.written)} contact(s)")
+    if result.removed:
+        click.echo(f"Removed: {len(result.removed)} contact(s)")
+    if not result.written and not result.removed:
+        click.echo("Already up to date.")
+
+    # 2. Birthdays.
+    click.echo("\n── Birthdays ──")
+    birthdays = find_birthdays(content_dir)
+    if birthdays:
+        for data in birthdays:
+            recorded = record_birthday_exchange(data)
+            status = "recorded" if recorded else "already sent"
+            click.echo(f"  🎂 {data.get('name')} ({status})")
+    else:
+        click.echo("  No birthdays today.")
+
+    # 3. Publish.
+    click.echo("\n── Publish ──")
+    output_dir = base / output
+    photo_dir = base / cfg.photo_dir
+    css_path = base / "doc" / "ui" / "contact.css"
+    if not css_path.is_file():
+        css_path = None
+    count = build_site(content_dir, output_dir, photo_dir, css_path)
+    click.echo(f"Published {count} contact(s) to {output_dir}")
+
+
+@cli.command()
 @click.option("--all", "show_all", is_flag=True, help="Include already triaged.")
 @click.pass_context
 def triage(ctx: click.Context, show_all: bool) -> None:
