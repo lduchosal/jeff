@@ -92,11 +92,14 @@ def build_site(
     _log.debug("Loaded %d contact(s) from %s", len(contacts), content_dir)
 
     # Set up Jinja2 with bundled templates.
+    from urllib.parse import quote
+
     template_dir = resources.files("jeff").joinpath("templates")
     env = Environment(
         loader=FileSystemLoader(str(template_dir)),
         autoescape=True,
     )
+    env.filters["whatsapp_encode"] = lambda s: quote(str(s), safe="")
     contact_tpl = env.get_template("contact.html")
     index_tpl = env.get_template("index.html")
 
