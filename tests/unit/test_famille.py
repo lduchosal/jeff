@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from jeff.services.famille import (
+    check_family_consistency,
     format_existing_links,
+    load_famille_context,
     merge_list_field,
     reciprocal_updates,
 )
@@ -127,3 +131,120 @@ class TestFormatExistingLinks:
         assert len(links) == 1
         assert "luc" in links[0]
         assert "lea" in links[0]
+
+
+def _make_contact(tmp_path: Path, slug: str, **fields: str) -> None:
+    """Write a minimal contact .md file."""
+    lines = ["---", f"name: {fields.get('name', slug)}", f"slug: {slug}"]
+    for k, v in fields.items():
+        if k != "name":
+            lines.append(f"{k}: {v}")
+    lines.append("---")
+    (tmp_path / f"{slug}.md").write_text("\n".join(lines), encoding="utf-8")
+
+
+class TestCheckFamilyConsistency:
+    """Tests for bidirectional family link verification."""
+
+    def test_no_issues_when_consistent(self, tmp_path: Path) -> None:
+        """No issues when links are bidirectional."""
+        _make_contact(
+            tmp_path, "jacques",
+            name="Jacques Dupont", relation="famille", genre="homme",
+            enfants="[jean]",
+        )
+        _make_contact(
+            tmp_path, "jean",
+            name="Jean Dupont", relation="famille", genre="homme",
+            pere="jacques",
+        )
+        ctx = load_famille_context(tmp_path)
+        issues = check_family_consistency(ctx)
+        assert len(issues) == 0
+
+    def test_parent_missing_child(self, tmp_path: Path) -> None:
+        """Detects when a child has pere but parent has no enfants."""
+        _make_contact(
+            tmp_path, "jacques",
+            name="Jacques Dupont", relation="famille", genre="homme",
+        )
+        _make_contact(
+            tmp_path, "jean",
+            name="Jean Dupont", relation="famille", genre="homme",
+            pere="jacques",
+        )
+        ctx = load_famille_context(tmp_path)
+        issues = check_family_consistency(ctx)
+        assert len(issues) == 1
+        assert issues[0].fix_contact == "jacques"
+        assert issues[0].fix_field == "enfants"
+        assert issues[0].fix_value == "jean"
+
+    def test_child_missing_parent(self, tmp_path: Path) -> None:
+        """Detects when parent has enfant but child has no pere/mere."""
+        _make_contact(
+            tmp_path, "jacques",
+            name="Jacques Dupont", relation="famille", genre="homme",
+            enfants="[jean]",
+        )
+        _make_contact(
+            tmp_path, "jean",
+            name="Jean Dupont", relation="famille", genre="homme",
+        )
+        ctx = load_famille_context(tmp_path)
+        issues = check_family_consistency(ctx)
+        assert len(issues) == 1
+        assert issues[0].fix_contact == "jean"
+        assert issues[0].fix_field == "pere"
+        assert issues[0].fix_value == "jacques"
+
+    def test_conjoint_not_reciprocal(self, tmp_path: Path) -> None:
+        """Detects when conjoint is one-way."""
+        _make_contact(
+            tmp_path, "jean",
+            name="Jean", relation="famille", conjoint="marie",
+        )
+        _make_contact(
+            tmp_path, "marie",
+            name="Marie", relation="famille",
+        )
+        ctx = load_famille_context(tmp_path)
+        issues = check_family_consistency(ctx)
+        assert len(issues) == 1
+        assert issues[0].fix_contact == "marie"
+        assert issues[0].fix_field == "conjoint"
+
+    def test_sibling_not_reciprocal(self, tmp_path: Path) -> None:
+        """Detects when freres_soeurs is one-way."""
+        _make_contact(
+            tmp_path, "jean",
+            name="Jean", relation="famille",
+            freres_soeurs="[paul]",
+        )
+        _make_contact(
+            tmp_path, "paul",
+            name="Paul", relation="famille",
+        )
+        ctx = load_famille_context(tmp_path)
+        issues = check_family_consistency(ctx)
+        assert len(issues) == 1
+        assert issues[0].fix_contact == "paul"
+        assert issues[0].fix_field == "freres_soeurs"
+
+    def test_mere_missing_child(self, tmp_path: Path) -> None:
+        """Detects when a child has mere but mother has no enfants."""
+        _make_contact(
+            tmp_path, "anne",
+            name="Anne Dupont", relation="famille", genre="femme",
+        )
+        _make_contact(
+            tmp_path, "jean",
+            name="Jean Dupont", relation="famille",
+            mere="anne",
+        )
+        ctx = load_famille_context(tmp_path)
+        issues = check_family_consistency(ctx)
+        assert len(issues) == 1
+        assert issues[0].fix_contact == "anne"
+        assert issues[0].fix_field == "enfants"
+        assert issues[0].fix_value == "jean"
