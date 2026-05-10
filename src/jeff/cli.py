@@ -114,6 +114,42 @@ def publish(ctx: click.Context, output: str) -> None:
 
 
 @cli.command()
+@click.pass_context
+def check(ctx: click.Context) -> None:
+    """Check for duplicate contacts (same UID) and propose cleanup."""
+    from jeff.services.duplicates import find_duplicates, remove_duplicate
+
+    content_dir = _content_dir(ctx)
+    if not content_dir.is_dir():
+        click.echo("No contacts found.", err=True)
+        sys.exit(1)
+
+    dupes = find_duplicates(content_dir)
+    if not dupes:
+        click.echo("No duplicates found.")
+        return
+
+    click.echo(f"\n{len(dupes)} duplicate UID(s) found\n")
+    click.echo("f=fix (keep newest, delete others)  s=skip  q=quit\n")
+    fixed = 0
+    for i, dupe in enumerate(dupes, 1):
+        click.echo(f"── [{i}/{len(dupes)}] UID: {dupe.uid} ──")
+        click.echo(f"  Keep: {dupe.recommended.get('name')} ({dupe.recommended['_path'].name})")
+        for old in dupe.to_remove:
+            click.echo(f"  Delete: {old.get('name')} ({old['_path'].name})")
+        click.echo()
+        raw = click.prompt("  >", default="f").strip().lower()
+        if raw == "q":
+            break
+        if raw == "f":
+            for old in dupe.to_remove:
+                remove_duplicate(old)
+                click.echo(f"    ✗ deleted {old['_path'].name}")
+            fixed += 1
+    click.echo(f"\nFixed {fixed} duplicate(s).")
+
+
+@cli.command()
 @click.option("--full", is_flag=True, help="Force full sync.")
 @click.option(
     "--output", "-o", default="public", help="Output directory (default: public)."
