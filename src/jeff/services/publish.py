@@ -99,7 +99,22 @@ def build_site(
         loader=FileSystemLoader(str(template_dir)),
         autoescape=True,
     )
-    env.filters["whatsapp_encode"] = lambda s: quote(str(s), safe="")
+    def _whatsapp_encode(s: str) -> str:
+        """Encode for WhatsApp wa.me links, keeping emojis as raw UTF-8."""
+        # WhatsApp handles raw UTF-8 emojis in URLs but chokes on
+        # percent-encoded multi-byte sequences. Encode only ASCII
+        # special chars, leave everything else (including emojis) as-is.
+        result: list[str] = []
+        for ch in str(s):
+            if ch == " ":
+                result.append("%20")
+            elif ch in "&=?#%+":
+                result.append(quote(ch, safe=""))
+            else:
+                result.append(ch)
+        return "".join(result)
+
+    env.filters["whatsapp_encode"] = _whatsapp_encode
     contact_tpl = env.get_template("contact.html")
     index_tpl = env.get_template("index.html")
 
