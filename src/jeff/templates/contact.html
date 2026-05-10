@@ -27,7 +27,7 @@
         {% endif %}
         {% if contact.relation or contact.priorite or contact.frequence or contact.genre %}
         <div class="contact-triage">
-          {% if contact.genre %}<span class="stat-badge stat-badge--{{ contact.genre }}">{{ contact.genre | title }}</span>{% endif %}
+          {% if contact.genre %}<span class="stat-badge stat-badge--{{ contact.genre }}">{% if contact.genre == 'homme' %}♂️{% else %}♀️{% endif %} {{ contact.genre | title }}</span>{% endif %}
           {% if contact.relation %}<span class="stat-badge stat-badge--{{ contact.relation }}">{{ contact.relation | title }}</span>{% endif %}
           {% if contact.priorite %}<span class="stat-badge stat-badge--{{ contact.priorite }}">{{ contact.priorite | title }}</span>{% endif %}
           {% if contact.frequence %}<span class="stat-badge">{{ contact.frequence | title }}</span>{% endif %}

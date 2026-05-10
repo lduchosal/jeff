@@ -69,7 +69,7 @@
           <div class="contact-card__avatar" aria-hidden="true">{{ contact.name[:1] }}</div>
         {% endif %}
         <div class="contact-card__body">
-          <div class="contact-card__name">{{ contact.name }}{% if contact.genre %} <span class="genre-icon genre-icon--{{ contact.genre }}"></span>{% endif %}</div>
+          <div class="contact-card__name">{{ contact.name }}{% if contact.genre %} {% if contact.genre == 'homme' %}♂️{% else %}♀️{% endif %}{% endif %}</div>
           {% if contact.note %}
             <div class="contact-card__note">{{ contact.note[:60] }}{{ '...' if contact.note | length > 60 }}</div>
           {% endif %}
