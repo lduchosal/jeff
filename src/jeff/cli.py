@@ -59,7 +59,7 @@ def sync(ctx: click.Context, full: bool) -> None:
     """Sync contacts from CardDAV to Markdown files."""
     from jeff.services.sync import run_sync
 
-    result = run_sync(ctx.obj["cfg"], full=full)
+    result = run_sync(ctx.obj["cfg"], full=full, progress=click.echo)
     if not result.written and not result.removed:
         click.echo("Already up to date.")
     else:

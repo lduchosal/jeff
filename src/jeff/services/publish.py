@@ -110,6 +110,18 @@ def build_site(
         # Fallback: just create an empty placeholder.
         (css_out / "contact.css").write_text("/* no css found */", encoding="utf-8")
 
+    # Copy bundled fonts CSS and font files.
+    static_dir = resources.files("jeff").joinpath("static")
+    fonts_css = static_dir.joinpath("fonts.css")
+    if hasattr(fonts_css, "is_file") and fonts_css.is_file():
+        shutil.copy2(str(fonts_css), css_out / "fonts.css")
+    fonts_src = static_dir.joinpath("fonts")
+    if hasattr(fonts_src, "is_dir") and fonts_src.is_dir():
+        fonts_out = css_out / "fonts"
+        if fonts_out.exists():
+            shutil.rmtree(fonts_out)
+        shutil.copytree(str(fonts_src), fonts_out)
+
     # Copy photos.
     photos_out = output_dir / "photos"
     if photo_dir and photo_dir.is_dir():

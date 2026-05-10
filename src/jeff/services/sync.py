@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,6 +11,13 @@ from jeff.domain.config import JeffConfig
 from jeff.domain.transform import contact_to_markdown, parse_vcard
 from jeff.domain.urlback import build_profile_url, inject_crm_url, inject_gender
 from jeff.services.triage import load_contact
+
+# Progress callback type: (message: str) -> None
+ProgressFn = Callable[[str], None]
+
+
+def _noop(msg: str) -> None:
+    """No-op progress callback."""
 
 
 @dataclass
@@ -22,8 +30,11 @@ class SyncResult:
     gender_count: int
 
 
-def run_sync(cfg: JeffConfig, full: bool = False) -> SyncResult:
+def run_sync(
+    cfg: JeffConfig, full: bool = False, progress: ProgressFn | None = None,
+) -> SyncResult:
     """Run a full sync cycle: fetch, transform, writeback."""
+    log = progress or _noop
     base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
     state_path = base / cfg.sync_state_path
     content_dir = base / cfg.content_dir
@@ -38,20 +49,26 @@ def run_sync(cfg: JeffConfig, full: bool = False) -> SyncResult:
     )
 
     # Discover addressbook.
+    log("Discovering addressbooks...")
     books = client.discover_addressbooks()
     if not books:
         return SyncResult([], [], 0, 0)
     addressbook_href = books[0]["href"]
+    log(f"Addressbook: {books[0]['displayname']}")
 
     # Load or reset state.
     state = SyncState() if full else SyncState.load(state_path)
 
     # Sync.
+    log("Fetching changes...")
     updated, deleted, new_state = client.sync(addressbook_href, state)
+    log(f"Found {len(updated)} updated, {len(deleted)} deleted")
 
     # Transform updated contacts.
     written: list[str] = []
-    for contact in updated:
+    for i, contact in enumerate(updated, 1):
+        data = parse_vcard(contact.vcard_raw)
+        log(f"Transform [{i}/{len(updated)}] {data.get('name', '?')}")
         path = contact_to_markdown(contact, content_dir, photo_dir)
         written.append(path.name)
 
@@ -74,10 +91,13 @@ def run_sync(cfg: JeffConfig, full: bool = False) -> SyncResult:
             new_state.contacts[contact.href]["slug"] = slug
 
     # Writeback: CRM URL.
-    url_count = _writeback_urls(cfg, client, updated, new_state, content_dir)
+    if cfg.publish_url and updated:
+        log("Writing back URLs...")
+    url_count = _writeback_urls(cfg, client, updated, new_state, content_dir, log)
 
-    # Writeback: gender (for ALL contacts with genre set locally, not just updated).
-    gender_count = _writeback_gender(client, new_state, content_dir)
+    # Writeback: gender.
+    log("Writing back gender...")
+    gender_count = _writeback_gender(client, new_state, content_dir, log)
 
     # Save state.
     new_state.save(state_path)
@@ -96,12 +116,13 @@ def _writeback_urls(
     updated: list[Contact],
     new_state: SyncState,
     content_dir: Path,
+    log: ProgressFn = _noop,
 ) -> int:
     """Write CRM profile URLs back to CardDAV."""
     if not cfg.publish_url or not updated:
         return 0
     count = 0
-    for contact in updated:
+    for i, contact in enumerate(updated, 1):
         data = parse_vcard(contact.vcard_raw)
         slug = data.get("slug", "")
         if not slug:
@@ -110,6 +131,7 @@ def _writeback_urls(
         new_vcard = inject_crm_url(contact.vcard_raw, profile_url)
         if new_vcard is None:
             continue
+        log(f"  URL [{i}/{len(updated)}] {data.get('name', '?')}")
         new_etag = client.put_contact(contact.href, new_vcard, contact.etag)
         if new_etag:
             count += 1
@@ -122,6 +144,7 @@ def _writeback_gender(
     client: CardDAVClient,
     new_state: SyncState,
     content_dir: Path,
+    log: ProgressFn = _noop,
 ) -> int:
     """Write gender back to CardDAV for all contacts that have it set locally.
 
@@ -139,7 +162,8 @@ def _writeback_gender(
         if s:
             slug_to_href[s] = href
 
-    for md_path in sorted(content_dir.glob("*.md")):
+    md_files = sorted(content_dir.glob("*.md"))
+    for i, md_path in enumerate(md_files, 1):
         md_data = load_contact(md_path)
         if not md_data or not md_data.get("genre"):
             continue
@@ -160,6 +184,7 @@ def _writeback_gender(
         new_vcard = inject_gender(current_vcard, md_data["genre"])
         if new_vcard is None:
             continue  # Already correct.
+        log(f"  Gender [{i}/{len(md_files)}] {md_data.get('name', '?')}")
         new_etag = client.put_contact(contact_href, new_vcard, contacts[0].etag)
         if new_etag:
             count += 1
