@@ -1,11 +1,11 @@
 ---
 id: 299
-status: review
+status: done
 who: Claude
 due_date: 
 position: 0
 created_at: 2026-05-09T20:34:34
-updated_at: 2026-05-09T21:17:28
+updated_at: 2026-05-09T22:09:47
 ---
 
 # CI / SonarCloud fails

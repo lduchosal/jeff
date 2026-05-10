@@ -1,11 +1,11 @@
 ---
 id: 298
-status: review
+status: done
 who: Claude
 due_date: 
-position: 0
+position: 1
 created_at: 2026-05-09T20:25:51
-updated_at: 2026-05-09T20:31:34
+updated_at: 2026-05-09T22:09:46
 ---
 
 # AGENT / Préparer les tags pour tri manuel des contacts

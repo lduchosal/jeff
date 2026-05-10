@@ -1,11 +1,11 @@
 ---
 id: 301
-status: review
+status: done
 who: Claude
 due_date: 
-position: 0
+position: 1
 created_at: 2026-05-09T21:18:15
-updated_at: 2026-05-09T21:21:16
+updated_at: 2026-05-09T22:09:48
 ---
 
 # QUALITY / SonarCloud issues
