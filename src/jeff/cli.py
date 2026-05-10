@@ -365,7 +365,7 @@ def famille(ctx: click.Context, check: bool) -> None:
             click.echo(
                 f"    fix: {issue.fix_contact} → {issue.fix_field}={issue.fix_value}"
             )
-            raw = click.prompt("    >", default="s").strip().lower()
+            raw = click.prompt("    >", default="f").strip().lower()
             if raw == "q":
                 break
             if raw == "f":
