@@ -54,7 +54,7 @@
         <p>{{ contact.birthday_message }}</p>
       </div>
       {% if contact.phone %}
-      <a class="btn btn--whatsapp" href="https://wa.me/{{ contact.phone | replace('+', '') | replace(' ', '') }}?text={{ contact.birthday_message | whatsapp_encode }}" target="_blank" rel="noopener noreferrer">
+      <a class="btn btn--whatsapp" href="https://wa.me/{{ (contact.phone_cell or contact.phone) | replace('+', '') | replace(' ', '') }}?text={{ contact.birthday_message | whatsapp_encode }}" target="_blank" rel="noopener noreferrer">
         Envoyer par WhatsApp
       </a>
       {% endif %}
@@ -88,7 +88,7 @@
         </div>
         <div class="field field--stacked">
           <span class="field__label">WhatsApp</span>
-          <span class="field__value"><a href="https://wa.me/{{ contact.phone | replace('+', '') | replace(' ', '') }}" target="_blank" rel="noopener noreferrer">{{ contact.phone }}</a></span>
+          <span class="field__value"><a href="https://wa.me/{{ (contact.phone_cell or contact.phone) | replace('+', '') | replace(' ', '') }}" target="_blank" rel="noopener noreferrer">{{ contact.phone_cell or contact.phone }}</a></span>
         </div>
         {% endif %}
         {% if contact.birthday %}

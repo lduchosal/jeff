@@ -108,6 +108,9 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
         data["phones"] = phone_list
         pref = next((p for p in phone_list if p.get("pref")), phone_list[0])
         data["phone"] = pref["number"]
+        # Cell phone for WhatsApp (cell > pref > first).
+        cell = next((p for p in phone_list if p.get("type") == "cell"), None)
+        data["phone_cell"] = (cell or pref)["number"]
 
     # Addresses
     adrs = vc.contents.get("adr", [])
