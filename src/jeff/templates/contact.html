@@ -81,11 +81,13 @@
           <span class="field__value"><a href="mailto:{{ contact.email }}" target="_blank" rel="noopener noreferrer">{{ contact.email }}</a></span>
         </div>
         {% endif %}
-        {% if contact.phone %}
+        {% for ph in contact.phones or [] %}
         <div class="field field--stacked">
-          <span class="field__label">Téléphone</span>
-          <span class="field__value"><a href="tel:{{ contact.phone }}" target="_blank" rel="noopener noreferrer">{{ contact.phone }}</a></span>
+          <span class="field__label">{{ ph.type | default('Téléphone') | title }}</span>
+          <span class="field__value"><a href="tel:{{ ph.number }}" target="_blank" rel="noopener noreferrer">{{ ph.number }}</a></span>
         </div>
+        {% endfor %}
+        {% if contact.phone_cell or contact.phone %}
         <div class="field field--stacked">
           <span class="field__label">WhatsApp</span>
           <span class="field__value"><a href="https://api.whatsapp.com/send?phone={{ (contact.phone_cell or contact.phone) | replace('+', '') | replace(' ', '') }}" target="_blank" rel="noopener noreferrer">{{ contact.phone_cell or contact.phone }}</a></span>
