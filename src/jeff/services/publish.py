@@ -223,13 +223,13 @@ def build_site(
     (output_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     # Render genealogy page.
-    from jeff.services.genealogy import build_family_trees, tree_to_html
+    from jeff.services.genealogy import build_family_trees, tree_to_svg
     from markupsafe import Markup
 
     trees = build_family_trees(content_dir)
     if trees:
         genealogy_tpl = env.get_template("genealogie.html")
-        trees_html = [Markup(tree_to_html(t)) for t in trees]
+        trees_html = [Markup(tree_to_svg(t)) for t in trees]
         gen_html = genealogy_tpl.render(
             trees_html=trees_html,
             tree_count=len(trees),

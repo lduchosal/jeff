@@ -20,12 +20,10 @@
 
   <p style="margin: var(--space-3) 0;"><a href="index.html">← Retour aux contacts</a></p>
 
-  {% for tree_html in trees_html %}
+  {% for tree_svg in trees_html %}
   <section class="dashboard-section">
     <div class="tree-container">
-      <ul class="tree">
-        {{ tree_html }}
-      </ul>
+      {{ tree_svg }}
     </div>
   </section>
   {% endfor %}
