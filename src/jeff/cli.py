@@ -197,7 +197,7 @@ def triage(ctx: click.Context, show_all: bool) -> None:
     click.echo("  Format: a <relation> <priority> <genre>")
     click.echo("  relation: a=ami c=collegue f=famille k=connaissance")
     click.echo("  priority: h=haute m=moyenne b=basse")
-    click.echo("  genre: H=homme F=femme")
+    click.echo("  genre: H=homme F=femme N=none")
     click.echo("  Ex: 'a f h H'  'r'  's'\n")
 
     rel = {"a": "ami", "c": "collegue", "f": "famille", "k": "connaissance"}
@@ -255,7 +255,7 @@ def genre(ctx: click.Context) -> None:
         return
 
     click.echo(f"\n{len(contacts)} contacts without genre")
-    click.echo("H=homme  F=femme  Enter=skip  q=quit\n")
+    click.echo("H=homme  F=femme  N=none (entreprise)  Enter=skip  q=quit\n")
     edited = 0
     for i, data in enumerate(contacts, 1):
         raw = (

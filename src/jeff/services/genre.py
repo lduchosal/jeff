@@ -7,7 +7,7 @@ from typing import Any
 
 from jeff.services.triage import load_contact, save_triage
 
-GENRE_MAP = {"h": "homme", "f": "femme"}
+GENRE_MAP = {"h": "homme", "f": "femme", "n": "none"}
 
 
 def load_contacts_without_genre(content_dir: Path) -> list[dict[str, Any]]:
