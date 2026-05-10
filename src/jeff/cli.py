@@ -274,7 +274,7 @@ def genre(ctx: click.Context) -> None:
 @click.pass_context
 def delete_cmd(ctx: click.Context) -> None:
     """Mark contacts for deletion, then confirm."""
-    from jeff.services.triage import load_contact, save_triage
+    from jeff.services.triage import format_summary, load_contact, save_triage
 
     content_dir = _content_dir(ctx)
     if not content_dir.is_dir():
@@ -297,15 +297,10 @@ def delete_cmd(ctx: click.Context) -> None:
 
     marked: list[dict] = []
     for i, data in enumerate(contacts, 1):
-        tags = ", ".join(data.get("tags", []))
-        note = data.get("note", "")
-        detail = f" ({tags})" if tags else ""
-        if note:
-            detail += f" — {note[:40]}"
-        raw = click.prompt(
-            f"  [{i}/{len(contacts)}] {data.get('name')}{detail}",
-            default="", show_default=False,
-        ).strip().lower()
+        click.echo(f"── [{i}/{len(contacts)}] {'─' * 50}")
+        click.echo(format_summary(data))
+        click.echo()
+        raw = click.prompt("  d=delete  Enter=skip  q=quit >", default="", show_default=False).strip().lower()
         if raw == "q":
             break
         if raw == "d":
