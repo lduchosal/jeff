@@ -152,7 +152,9 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
             if atype:
                 entry["type"] = atype
             if a.street:
-                entry["street"] = _collapse_newlines(a.street) if "\n" in a.street else a.street
+                entry["street"] = (
+                    _collapse_newlines(a.street) if "\n" in a.street else a.street
+                )
             if a.city:
                 entry["city"] = a.city
             if a.region:
@@ -438,7 +440,10 @@ def contact_to_markdown(
                     try:
                         old = yaml.safe_load("\n".join(lines_ex[1:idx])) or {}
                     except yaml.YAMLError:
-                        _log.warning("Corrupt frontmatter in %s, skipping preservation", md_path.name)
+                        _log.warning(
+                            "Corrupt frontmatter in %s, skipping preservation",
+                            md_path.name,
+                        )
                         break
                     for k in _triage_keys:
                         if old.get(k):

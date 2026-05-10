@@ -61,7 +61,9 @@ def sync(ctx: click.Context, full: bool, writeback_gender: bool) -> None:
     from jeff.services.sync import run_sync
 
     result = run_sync(
-        ctx.obj["cfg"], full=full, progress=click.echo,
+        ctx.obj["cfg"],
+        full=full,
+        progress=click.echo,
         writeback_gender=writeback_gender,
     )
     if not result.written and not result.removed:
@@ -262,11 +264,14 @@ def genre(ctx: click.Context) -> None:
 
 
 @cli.command()
+@click.option("--check", is_flag=True, help="Check & fix bidirectional consistency.")
 @click.pass_context
-def famille(ctx: click.Context) -> None:
-    """Batch-edit family links for famille contacts."""
+def famille(ctx: click.Context, check: bool) -> None:
+    """Batch-edit family links, or --check consistency."""
     from jeff.services.famille import (
         apply_famille_updates,
+        apply_fix,
+        check_family_consistency,
         format_existing_links,
         load_famille_context,
         parse_tokens,
@@ -282,6 +287,32 @@ def famille(ctx: click.Context) -> None:
     fctx = load_famille_context(content_dir)
     if not fctx.famille_contacts:
         click.echo("No famille contacts found.")
+        return
+
+    # --check mode: verify and fix consistency.
+    if check:
+        issues = check_family_consistency(fctx)
+        if not issues:
+            click.echo("All family links are consistent.")
+            return
+        by_slug = {c.get("slug", ""): c for c in fctx.all_contacts}
+        click.echo(f"\n{len(issues)} inconsistencies found\n")
+        click.echo("f=fix  s=skip  q=quit\n")
+        fixed = 0
+        for i, issue in enumerate(issues, 1):
+            click.echo(f"  [{i}/{len(issues)}] {issue.message}")
+            click.echo(
+                f"    fix: {issue.fix_contact} → {issue.fix_field}={issue.fix_value}"
+            )
+            raw = click.prompt("    >", default="s").strip().lower()
+            if raw == "q":
+                break
+            if raw == "f":
+                result = apply_fix(issue, by_slug)
+                if result:
+                    click.echo(f"    {result}")
+                    fixed += 1
+        click.echo(f"\nFixed {fixed} inconsistencies.")
         return
 
     click.echo(f"\n{len(fctx.famille_contacts)} famille contacts\n")

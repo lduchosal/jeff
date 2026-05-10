@@ -17,7 +17,8 @@ BIRTHDAY_MESSAGE = (
 
 
 def find_birthdays(
-    content_dir: Path, target_date: date | None = None,
+    content_dir: Path,
+    target_date: date | None = None,
 ) -> list[dict[str, Any]]:
     """Find contacts whose birthday is today (or target_date)."""
     d = target_date or date.today()
@@ -45,7 +46,8 @@ def find_birthdays(
 
 
 def record_birthday_exchange(
-    contact: dict[str, Any], target_date: date | None = None,
+    contact: dict[str, Any],
+    target_date: date | None = None,
 ) -> bool:
     """Write a birthday exchange entry in the contact's frontmatter.
 
