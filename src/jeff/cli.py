@@ -218,7 +218,7 @@ def triage(ctx: click.Context, show_all: bool) -> None:
                 break
             parts = raw.split()
             if parts[0] == "a":
-                updates: dict[str, str] = {"status": "actif"}
+                updates: dict[str, str] = {"status": "actif", "delete": "false"}
                 if len(parts) >= 2 and parts[1] in rel:
                     updates["relation"] = rel[parts[1]]
                 if len(parts) >= 3 and parts[2] in pri:
@@ -285,18 +285,18 @@ def delete_cmd(ctx: click.Context) -> None:
         click.echo("No contacts found.", err=True)
         sys.exit(1)
 
-    # Load archived contacts — candidates for deletion.
+    # Load contacts with delete field empty (not yet decided).
     contacts = []
     for md in sorted(content_dir.glob("*.md")):
         data = load_contact(md)
-        if data and data.get("name") and data.get("status") == "archivé":
+        if data and data.get("name") and not data.get("delete"):
             contacts.append(data)
 
     if not contacts:
-        click.echo("No archived contacts to review.")
+        click.echo("No contacts to review for deletion.")
         return
 
-    click.echo(f"\n{len(contacts)} archived contacts")
+    click.echo(f"\n{len(contacts)} contacts to review")
     click.echo("d=delete  Enter=skip  q=quit\n")
 
     marked: list[dict] = []
@@ -310,6 +310,9 @@ def delete_cmd(ctx: click.Context) -> None:
         if raw == "d":
             marked.append(data)
             click.echo("    ✗ marked for deletion")
+        else:
+            # Skip = keep, mark as delete: false so we don't ask again.
+            save_triage(data["_path"], {"delete": "false"})
 
     if not marked:
         click.echo("\nNo contacts marked.")
@@ -325,8 +328,8 @@ def delete_cmd(ctx: click.Context) -> None:
         return
 
     for data in marked:
-        save_triage(data["_path"], {"status": "supprimé"})
-    click.echo(f"\n{len(marked)} contact(s) marked as 'supprimé'.")
+        save_triage(data["_path"], {"delete": "true"})
+    click.echo(f"\n{len(marked)} contact(s) marked for deletion.")
     click.echo("Next jeff sync will delete them from CardDAV.")
 
 
@@ -357,11 +360,11 @@ def famille(ctx: click.Context, check: bool, query: str | None) -> None:
 
     fctx = load_famille_context(content_dir)
 
-    # Filter by query if provided.
+    # Filter by query if provided — search ALL contacts, not just famille.
     if query:
         q = query.lower()
         fctx.famille_contacts = [
-            c for c in fctx.famille_contacts
+            c for c in fctx.all_contacts
             if q in (c.get("name") or "").lower() or q in (c.get("slug") or "").lower()
         ]
 

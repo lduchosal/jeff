@@ -125,7 +125,7 @@ def run_sync(
         log("Writing back family links...")
         famille_count = _writeback_famille(client, new_state, content_dir, log)
 
-    # Delete contacts marked as 'supprimé' from CardDAV.
+    # Delete contacts marked with delete: true from CardDAV.
     deleted_remote: list[str] = []
     slug_to_href: dict[str, str] = {}
     for href, info in new_state.contacts.items():
@@ -134,7 +134,7 @@ def run_sync(
             slug_to_href[s] = href
     for md_path in sorted(content_dir.glob("*.md")):
         md_data = load_contact(md_path)
-        if not md_data or md_data.get("status") != "supprimé":
+        if not md_data or str(md_data.get("delete", "")).lower() != "true":
             continue
         slug = md_data.get("slug", "")
         name = md_data.get("name", slug)

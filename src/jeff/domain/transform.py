@@ -336,7 +336,7 @@ def render_frontmatter(data: dict[str, Any]) -> str:
         lines.append(f"tags: [{tags_str}]")
 
     # Sorting/triage fields (preserved from existing frontmatter if present).
-    for key in ("status", "relation", "frequence", "priorite", "genre"):
+    for key in ("status", "relation", "frequence", "priorite", "genre", "delete"):
         lines.append(f"{key}: {_yaml_value(data[key]) if data.get(key) else ''}")
 
     # Family link fields (preserved from existing frontmatter).
@@ -437,6 +437,7 @@ def contact_to_markdown(
         "frequence",
         "priorite",
         "genre",
+        "delete",
         "pere",
         "mere",
         "conjoint",
