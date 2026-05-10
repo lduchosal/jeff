@@ -260,6 +260,7 @@ def render_frontmatter(data: dict[str, Any]) -> str:
         "name_suffix",
         "email",
         "phone",
+        "phone_cell",
         "birthday",
         "note",
         "photo",

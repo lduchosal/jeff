@@ -52,6 +52,16 @@ VCARD_MULTILINE_ADR = (
     "END:VCARD"
 )
 
+VCARD_CELL_AND_HOME = """\
+BEGIN:VCARD
+VERSION:3.0
+UID:urn:uuid:cell-home
+FN:Test Phones
+N:Phones;Test;;;
+TEL;TYPE=HOME:+33900000000
+TEL;TYPE=CELL:+33600000000
+END:VCARD"""
+
 VCARD_MULTILINE_NOTE = (
     "BEGIN:VCARD\r\n"
     "VERSION:3.0\r\n"
@@ -135,6 +145,26 @@ class TestParseVcard:
         assert "emails" not in data
         assert "phones" not in data
         assert "addresses" not in data
+
+    def test_phone_cell_priority(self) -> None:
+        """phone_cell picks cell over home/pref."""
+        data = parse_vcard(VCARD_CELL_AND_HOME)
+        assert data["phone"] == "+33900000000"  # first (no pref)
+        assert data["phone_cell"] == "+33600000000"  # cell wins
+
+    def test_phone_cell_in_frontmatter(self) -> None:
+        """phone_cell is written to YAML frontmatter."""
+        data = parse_vcard(VCARD_CELL_AND_HOME)
+        data.pop("_photo_data", None)
+        fm = render_frontmatter(data)
+        assert "phone_cell:" in fm
+        assert "+33600000000" in fm
+
+    def test_phone_cell_fallback(self) -> None:
+        """phone_cell falls back to pref when no cell type."""
+        data = parse_vcard(VCARD_FULL)
+        # VCARD_FULL has CELL as PREF, so phone and phone_cell are the same
+        assert data["phone_cell"] == "+41791234567"
 
     def test_multi_org(self) -> None:
         """Parses multiple ORG/TITLE pairs."""
