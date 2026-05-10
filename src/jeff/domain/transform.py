@@ -189,7 +189,7 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
             else:
                 parts = str(bday_val).split("-")
                 sign_name, sign_emoji = zodiac_sign(int(parts[1]), int(parts[2]))
-            data["signe"] = f"{sign_emoji} {sign_name}"
+            data["signe"] = sign_name
         except (IndexError, ValueError):
             pass
 
