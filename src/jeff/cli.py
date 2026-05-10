@@ -332,9 +332,13 @@ def delete_cmd(ctx: click.Context) -> None:
 
 @cli.command()
 @click.option("--check", is_flag=True, help="Check & fix bidirectional consistency.")
+@click.argument("query", required=False, default=None)
 @click.pass_context
-def famille(ctx: click.Context, check: bool) -> None:
-    """Batch-edit family links, or --check consistency."""
+def famille(ctx: click.Context, check: bool, query: str | None) -> None:
+    """Batch-edit family links, or --check consistency.
+
+    Optionally pass a name to filter: jeff famille edmond
+    """
     from jeff.services.famille import (
         apply_famille_updates,
         apply_fix,
@@ -352,8 +356,17 @@ def famille(ctx: click.Context, check: bool) -> None:
         sys.exit(1)
 
     fctx = load_famille_context(content_dir)
+
+    # Filter by query if provided.
+    if query:
+        q = query.lower()
+        fctx.famille_contacts = [
+            c for c in fctx.famille_contacts
+            if q in (c.get("name") or "").lower() or q in (c.get("slug") or "").lower()
+        ]
+
     if not fctx.famille_contacts:
-        click.echo("No famille contacts found.")
+        click.echo("No famille contacts found." if not query else f"No match for '{query}'.")
         return
 
     # --check mode: verify and fix consistency.
