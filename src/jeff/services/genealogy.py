@@ -104,100 +104,119 @@ def _build_node(
     return node
 
 
+def _gender_icon(genre: str) -> str:
+    """Return gender symbol."""
+    if genre == "homme":
+        return "\u2642"
+    if genre == "femme":
+        return "\u2640"
+    return ""
+
+
+def _node_color(genre: str) -> tuple[str, str]:
+    """Return (fillcolor, bordercolor) for a genre."""
+    if genre == "homme":
+        return "#dbeafe", "#3b82f6"
+    if genre == "femme":
+        return "#fce7f3", "#ec4899"
+    return "#f3f4f6", "#9ca3af"
+
+
 def tree_to_svg(root: TreeNode) -> str:
     """Render a family tree as SVG using Graphviz."""
     dot = graphviz.Digraph(
         format="svg",
+        engine="dot",
         graph_attr={
             "rankdir": "TB",
-            "splines": "ortho",
-            "nodesep": "0.6",
-            "ranksep": "0.8",
+            "splines": "polyline",
+            "nodesep": "0.5",
+            "ranksep": "0.7",
             "bgcolor": "transparent",
+            "margin": "0.2",
         },
         node_attr={
-            "shape": "box",
-            "style": "rounded,filled",
-            "fontname": "Inter, Helvetica, Arial, sans-serif",
+            "fontname": "Helvetica, Arial, sans-serif",
             "fontsize": "11",
-            "height": "0.4",
-            "width": "1.8",
-            "penwidth": "2",
+            "penwidth": "1.5",
         },
         edge_attr={
-            "color": "#cbd5e1",
+            "color": "#94a3b8",
             "arrowhead": "none",
-            "penwidth": "1.5",
+            "penwidth": "1.2",
         },
     )
 
-    _add_nodes(dot, root)
-    _add_edges(dot, root)
+    _render_tree(dot, root)
 
-    # Render to SVG string.
     svg_bytes: bytes = dot.pipe()
     svg: str = svg_bytes.decode("utf-8")
-    # Strip XML header and doctype, keep just the <svg> tag.
     idx = svg.find("<svg")
     if idx >= 0:
         svg = svg[idx:]
     return svg
 
 
-def _person_label(node: TreeNode) -> str:
-    """Build the display label for a person node."""
-    icon = "\u2642" if node.genre == "homme" else "\u2640" if node.genre == "femme" else ""
-    return f"{icon} {node.name}"
+def _couple_node_id(node: TreeNode) -> str:
+    """Unique ID for a couple join point."""
+    if node.conjoint:
+        return f"c_{node.slug}_{node.conjoint.slug}"
+    return node.slug
 
 
-def _person_style(node: TreeNode) -> dict[str, str]:
-    """Return Graphviz node attributes for a person."""
-    if node.genre == "homme":
-        return {"fillcolor": "#eff6ff", "color": "#93c5fd"}
-    if node.genre == "femme":
-        return {"fillcolor": "#fdf2f8", "color": "#f9a8d4"}
-    return {"fillcolor": "#f9fafb", "color": "#e5e7eb"}
-
-
-def _add_nodes(dot: graphviz.Digraph, node: TreeNode) -> None:
-    """Add person nodes and couple connectors to the graph."""
-    attrs = _person_style(node)
-    attrs["href"] = f"contacts/{node.slug}.html"
-    dot.node(node.slug, _person_label(node), **attrs)
+def _render_tree(dot: graphviz.Digraph, node: TreeNode) -> None:
+    """Render a node, its conjoint, and children recursively."""
+    # Person node.
+    fill, border = _node_color(node.genre)
+    icon = _gender_icon(node.genre)
+    label = f"{icon} {node.name}"
+    dot.node(
+        node.slug,
+        label,
+        shape="box",
+        style="rounded,filled",
+        fillcolor=fill,
+        color=border,
+        href=f"contacts/{node.slug}.html",
+        target="_top",
+    )
 
     if node.conjoint:
         c = node.conjoint
-        cattrs = _person_style(c)
-        cattrs["href"] = f"contacts/{c.slug}.html"
-        dot.node(c.slug, _person_label(c), **cattrs)
+        cfill, cborder = _node_color(c.genre)
+        cicon = _gender_icon(c.genre)
+        dot.node(
+            c.slug,
+            f"{cicon} {c.name}",
+            shape="box",
+            style="rounded,filled",
+            fillcolor=cfill,
+            color=cborder,
+            href=f"contacts/{c.slug}.html",
+            target="_top",
+        )
 
-        # Invisible couple node to join spouses.
-        couple_id = f"couple_{node.slug}_{c.slug}"
-        dot.node(couple_id, "", shape="point", width="0", height="0")
+        # Couple join point (invisible).
+        couple_id = _couple_node_id(node)
+        dot.node(couple_id, "", shape="point", width="0.01", height="0.01")
 
-        # Same rank for couple.
+        # Force same rank.
         with dot.subgraph() as s:
             s.attr(rank="same")
             s.node(node.slug)
-            s.node(c.slug)
             s.node(couple_id)
+            s.node(c.slug)
 
-    for child in node.children:
-        _add_nodes(dot, child)
+        # Spouse edges (thicker, no arrow).
+        dot.edge(node.slug, couple_id, penwidth="2", color="#64748b", minlen="1")
+        dot.edge(couple_id, c.slug, penwidth="2", color="#64748b", minlen="1")
 
-
-def _add_edges(dot: graphviz.Digraph, node: TreeNode) -> None:
-    """Add edges between parents and children."""
-    if node.conjoint:
-        couple_id = f"couple_{node.slug}_{node.conjoint.slug}"
-        dot.edge(node.slug, couple_id)
-        dot.edge(node.conjoint.slug, couple_id)
-        # Children connect from the couple point.
         parent_id = couple_id
     else:
         parent_id = node.slug
 
+    # Children.
     for child in node.children:
-        child_id = child.slug
-        dot.edge(parent_id, child_id)
-        _add_edges(dot, child)
+        _render_tree(dot, child)
+        child_target = child.slug
+        dot.edge(parent_id, child_target)
