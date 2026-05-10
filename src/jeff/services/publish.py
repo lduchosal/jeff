@@ -129,10 +129,40 @@ def build_site(
             shutil.rmtree(photos_out)
         shutil.copytree(photo_dir, photos_out)
 
+    # Detect today's birthdays (before rendering so contact pages know).
+    from datetime import date
+
+    today = date.today()
+    today_str = f"{today.month:02d}-{today.day:02d}"
+    birthdays: list[_DotDict] = []
+    for c in contacts:
+        bday = c.get("birthday")
+        if not bday:
+            continue
+        bday_s = str(bday)
+        if len(bday_s) >= 10:
+            bday_md = bday_s[5:10]
+        elif len(bday_s) == 5:
+            bday_md = bday_s
+        else:
+            continue
+        if bday_md == today_str:
+            birthdays.append(_DotDict(c))
+
+    bday_msg = (
+        "Je vois que c'est une journ\u00e9e sp\u00e9ciale pour toi, "
+        "je te souhaite un joyeux anniversaire et une journ\u00e9e "
+        "remplie de joies et de belles attentions. "
+        "\U0001f618\U0001f389\U0001f38a\U0001f381\U0001f382\U0001f308"
+    )
+    birthday_slugs = {c.get("slug") for c in birthdays}
+
     # Render contact pages.
     for contact in contacts:
-        # Wrap dict in a SimpleNamespace-like object for template dot access.
-        html = contact_tpl.render(contact=_DotDict(contact))
+        dc = _DotDict(contact)
+        dc["is_birthday"] = dc.get("slug") in birthday_slugs
+        dc["birthday_message"] = bday_msg if dc["is_birthday"] else ""
+        html = contact_tpl.render(contact=dc)
         slug = contact.get("slug", "contact")
         _log.debug("Render %s.html", slug)
         (contacts_out / f"{slug}.html").write_text(html, encoding="utf-8")
@@ -163,6 +193,8 @@ def build_site(
         contacts=[_DotDict(c) for c in contacts],
         groups=sorted_groups,
         stats=stats,
+        birthdays=birthdays,
+        today=today.strftime("%d/%m/%Y"),
     )
     (output_dir / "index.html").write_text(index_html, encoding="utf-8")
 

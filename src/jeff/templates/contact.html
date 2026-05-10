@@ -47,6 +47,20 @@
     </section>
     {% endif %}
 
+    {% if contact.is_birthday %}
+    <section class="section section--birthday">
+      <h2 class="section__title">🎂 Joyeux anniversaire !</h2>
+      <div class="prose">
+        <p>{{ contact.birthday_message }}</p>
+      </div>
+      {% if contact.phone %}
+      <a class="btn btn--whatsapp" href="https://wa.me/{{ contact.phone | replace('+', '') | replace(' ', '') }}?text={{ contact.birthday_message | urlencode }}" target="_blank" rel="noopener noreferrer">
+        Envoyer par WhatsApp
+      </a>
+      {% endif %}
+    </section>
+    {% endif %}
+
     {% if contact.note %}
     <section class="section">
       <h2 class="section__title">Notes</h2>

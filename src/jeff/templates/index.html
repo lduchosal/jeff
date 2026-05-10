@@ -28,6 +28,32 @@
     {% endfor %}
   </div>
 
+  {% if birthdays %}
+  <section class="dashboard-section dashboard-section--birthday">
+    <h2 class="dashboard-section__title">
+      🎂 Anniversaires ({{ today }})
+      <span class="dashboard-section__count">{{ birthdays | length }}</span>
+    </h2>
+    <div class="dashboard-grid">
+      {% for contact in birthdays %}
+      <a class="contact-card contact-card--birthday" href="contacts/{{ contact.slug }}.html">
+        {% if contact.photo %}
+          <img class="contact-card__avatar" src="{{ contact.photo }}" alt="">
+        {% else %}
+          <div class="contact-card__avatar" aria-hidden="true">{{ contact.name[:1] }}</div>
+        {% endif %}
+        <div class="contact-card__body">
+          <div class="contact-card__name">🎉 {{ contact.name }}</div>
+          {% if contact.birthday %}
+            <div class="contact-card__note">{{ contact.birthday }}</div>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   {% for relation, group_contacts in groups %}
   <section class="dashboard-section">
     <h2 class="dashboard-section__title">
