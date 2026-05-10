@@ -19,6 +19,31 @@ from jeff.log import get_logger
 _log = get_logger("transform")
 
 
+_ZODIAC = [
+    (1, 20, "Capricorne", "\u2651"),
+    (2, 19, "Verseau", "\u2652"),
+    (3, 20, "Poissons", "\u2653"),
+    (4, 20, "B\u00e9lier", "\u2648"),
+    (5, 21, "Taureau", "\u2649"),
+    (6, 21, "G\u00e9meaux", "\u264a"),
+    (7, 22, "Cancer", "\u264b"),
+    (8, 23, "Lion", "\u264c"),
+    (9, 23, "Vierge", "\u264d"),
+    (10, 23, "Balance", "\u264e"),
+    (11, 22, "Scorpion", "\u264f"),
+    (12, 22, "Sagittaire", "\u2650"),
+    (12, 31, "Capricorne", "\u2651"),
+]
+
+
+def zodiac_sign(month: int, day: int) -> tuple[str, str]:
+    """Return (sign_name, emoji) for a given month/day."""
+    for end_month, end_day, name, emoji in _ZODIAC:
+        if (month, day) <= (end_month, end_day):
+            return name, emoji
+    return "Capricorne", "\u2651"
+
+
 def slugify(text: str) -> str:
     """Convert text to a URL-safe slug."""
     slug = text.lower().strip()
@@ -154,9 +179,19 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
             positions.append(pos)
         data["positions"] = positions
 
-    # Birthday
+    # Birthday + zodiac sign.
     if hasattr(vc, "bday"):
         data["birthday"] = vc.bday.value
+        bday_val = vc.bday.value
+        try:
+            if hasattr(bday_val, "month"):
+                sign_name, sign_emoji = zodiac_sign(bday_val.month, bday_val.day)
+            else:
+                parts = str(bday_val).split("-")
+                sign_name, sign_emoji = zodiac_sign(int(parts[1]), int(parts[2]))
+            data["signe"] = f"{sign_emoji} {sign_name}"
+        except (IndexError, ValueError):
+            pass
 
     # Categories -> tags
     cats = vc.contents.get("categories", [])
@@ -262,6 +297,7 @@ def render_frontmatter(data: dict[str, Any]) -> str:
         "phone",
         "phone_cell",
         "birthday",
+        "signe",
         "note",
         "photo",
         "rev",

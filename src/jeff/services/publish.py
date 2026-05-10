@@ -175,6 +175,17 @@ def build_site(
             cell = next((p for p in phones if p.get("type") == "cell"), None)
             pref = next((p for p in phones if p.get("pref")), phones[0])
             dc["phone_cell"] = (cell or pref).get("number", "")
+        # Compute zodiac sign if not in frontmatter.
+        if not dc.get("signe") and dc.get("birthday"):
+            from jeff.domain.transform import zodiac_sign
+
+            bday_s = str(dc["birthday"])
+            try:
+                parts = bday_s.split("-")
+                name, emoji = zodiac_sign(int(parts[1]), int(parts[2]))
+                dc["signe"] = f"{emoji} {name}"
+            except (IndexError, ValueError):
+                pass
         html = contact_tpl.render(contact=dc)
         slug = contact.get("slug", "contact")
         _log.debug("Render %s.html", slug)

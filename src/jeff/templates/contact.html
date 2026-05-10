@@ -96,7 +96,7 @@
         {% if contact.birthday %}
         <div class="field field--stacked">
           <span class="field__label">Anniversaire</span>
-          <span class="field__value">{{ contact.birthday }}</span>
+          <span class="field__value">{{ contact.birthday }}{% if contact.signe %} {{ contact.signe }}{% endif %}</span>
         </div>
         {% endif %}
         {% for addr in contact.addresses or [] %}

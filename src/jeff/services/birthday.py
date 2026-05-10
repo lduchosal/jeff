@@ -6,7 +6,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from jeff.services.triage import load_contact, save_triage
+from jeff.services.triage import load_contact
 
 BIRTHDAY_MESSAGE = (
     "Je vois que c'est une journ\u00e9e sp\u00e9ciale pour toi, "
