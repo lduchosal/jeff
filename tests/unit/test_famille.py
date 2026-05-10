@@ -149,13 +149,19 @@ class TestCheckFamilyConsistency:
     def test_no_issues_when_consistent(self, tmp_path: Path) -> None:
         """No issues when links are bidirectional."""
         _make_contact(
-            tmp_path, "jacques",
-            name="Jacques Dupont", relation="famille", genre="homme",
+            tmp_path,
+            "jacques",
+            name="Jacques Dupont",
+            relation="famille",
+            genre="homme",
             enfants="[jean]",
         )
         _make_contact(
-            tmp_path, "jean",
-            name="Jean Dupont", relation="famille", genre="homme",
+            tmp_path,
+            "jean",
+            name="Jean Dupont",
+            relation="famille",
+            genre="homme",
             pere="jacques",
         )
         ctx = load_famille_context(tmp_path)
@@ -165,12 +171,18 @@ class TestCheckFamilyConsistency:
     def test_parent_missing_child(self, tmp_path: Path) -> None:
         """Detects when a child has pere but parent has no enfants."""
         _make_contact(
-            tmp_path, "jacques",
-            name="Jacques Dupont", relation="famille", genre="homme",
+            tmp_path,
+            "jacques",
+            name="Jacques Dupont",
+            relation="famille",
+            genre="homme",
         )
         _make_contact(
-            tmp_path, "jean",
-            name="Jean Dupont", relation="famille", genre="homme",
+            tmp_path,
+            "jean",
+            name="Jean Dupont",
+            relation="famille",
+            genre="homme",
             pere="jacques",
         )
         ctx = load_famille_context(tmp_path)
@@ -183,13 +195,19 @@ class TestCheckFamilyConsistency:
     def test_child_missing_parent(self, tmp_path: Path) -> None:
         """Detects when parent has enfant but child has no pere/mere."""
         _make_contact(
-            tmp_path, "jacques",
-            name="Jacques Dupont", relation="famille", genre="homme",
+            tmp_path,
+            "jacques",
+            name="Jacques Dupont",
+            relation="famille",
+            genre="homme",
             enfants="[jean]",
         )
         _make_contact(
-            tmp_path, "jean",
-            name="Jean Dupont", relation="famille", genre="homme",
+            tmp_path,
+            "jean",
+            name="Jean Dupont",
+            relation="famille",
+            genre="homme",
         )
         ctx = load_famille_context(tmp_path)
         issues = check_family_consistency(ctx)
@@ -201,12 +219,17 @@ class TestCheckFamilyConsistency:
     def test_conjoint_not_reciprocal(self, tmp_path: Path) -> None:
         """Detects when conjoint is one-way."""
         _make_contact(
-            tmp_path, "jean",
-            name="Jean", relation="famille", conjoint="marie",
+            tmp_path,
+            "jean",
+            name="Jean",
+            relation="famille",
+            conjoint="marie",
         )
         _make_contact(
-            tmp_path, "marie",
-            name="Marie", relation="famille",
+            tmp_path,
+            "marie",
+            name="Marie",
+            relation="famille",
         )
         ctx = load_famille_context(tmp_path)
         issues = check_family_consistency(ctx)
@@ -217,13 +240,17 @@ class TestCheckFamilyConsistency:
     def test_sibling_not_reciprocal(self, tmp_path: Path) -> None:
         """Detects when freres_soeurs is one-way."""
         _make_contact(
-            tmp_path, "jean",
-            name="Jean", relation="famille",
+            tmp_path,
+            "jean",
+            name="Jean",
+            relation="famille",
             freres_soeurs="[paul]",
         )
         _make_contact(
-            tmp_path, "paul",
-            name="Paul", relation="famille",
+            tmp_path,
+            "paul",
+            name="Paul",
+            relation="famille",
         )
         ctx = load_famille_context(tmp_path)
         issues = check_family_consistency(ctx)
@@ -234,12 +261,17 @@ class TestCheckFamilyConsistency:
     def test_mere_missing_child(self, tmp_path: Path) -> None:
         """Detects when a child has mere but mother has no enfants."""
         _make_contact(
-            tmp_path, "anne",
-            name="Anne Dupont", relation="famille", genre="femme",
+            tmp_path,
+            "anne",
+            name="Anne Dupont",
+            relation="famille",
+            genre="femme",
         )
         _make_contact(
-            tmp_path, "jean",
-            name="Jean Dupont", relation="famille",
+            tmp_path,
+            "jean",
+            name="Jean Dupont",
+            relation="famille",
             mere="anne",
         )
         ctx = load_famille_context(tmp_path)

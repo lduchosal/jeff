@@ -49,7 +49,10 @@ def find_duplicates(content_dir: Path) -> list[Duplicate]:
 
 
 def remove_duplicate(contact: dict[str, Any]) -> bool:
-    """Delete a duplicate .md file. Return True if deleted."""
+    """Delete a duplicate .md file.
+
+    Return True if deleted.
+    """
     path = contact.get("_path")
     if path and path.exists():
         path.unlink()

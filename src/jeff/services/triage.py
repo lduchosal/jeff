@@ -39,8 +39,8 @@ def _sanitize_filename(name: str) -> str:
 def save_triage(path: Path, updates: dict[str, str]) -> None:
     """Update triage fields in a contact .md file.
 
-    Rebuilds a safe path from the parent directory and sanitized filename
-    to prevent path-traversal attacks (SonarCloud S2083).
+    Rebuilds a safe path from the parent directory and sanitized filename to prevent
+    path-traversal attacks (SonarCloud S2083).
     """
     parent = path.resolve().parent
     safe_name = _sanitize_filename(path.name)

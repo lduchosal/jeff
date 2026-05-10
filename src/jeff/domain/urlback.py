@@ -68,8 +68,8 @@ def inject_related(
 ) -> str | None:
     """Inject RELATED properties into a vCard string.
 
-    ``relations`` is a list of ``(type, uid)`` tuples where type is one of
-    ``parent``, ``spouse``, ``child``, ``sibling``.
+    ``relations`` is a list of ``(type, uid)`` tuples where type is one of ``parent``,
+    ``spouse``, ``child``, ``sibling``.
 
     Returns the modified vCard, or None if nothing changed.
     """

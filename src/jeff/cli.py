@@ -57,9 +57,13 @@ def _content_dir(ctx: click.Context) -> Path:
 @cli.command()
 @click.option("--full", is_flag=True, help="Force full sync (ignore cached state).")
 @click.option("--writeback-gender", is_flag=True, help="Push gender to CardDAV (slow).")
-@click.option("--writeback-famille", is_flag=True, help="Push family links to CardDAV (slow).")
+@click.option(
+    "--writeback-famille", is_flag=True, help="Push family links to CardDAV (slow)."
+)
 @click.pass_context
-def sync(ctx: click.Context, full: bool, writeback_gender: bool, writeback_famille: bool) -> None:
+def sync(
+    ctx: click.Context, full: bool, writeback_gender: bool, writeback_famille: bool
+) -> None:
     """Sync contacts from CardDAV to Markdown files."""
     from jeff.services.sync import run_sync
 
@@ -117,10 +121,16 @@ def publish(ctx: click.Context, output: str) -> None:
 
 @cli.command(name="export")
 @click.option(
-    "--format", "fmt", default="squirrelmail", help="Export format (squirrelmail).",
+    "--format",
+    "fmt",
+    default="squirrelmail",
+    help="Export format (squirrelmail).",
 )
 @click.option(
-    "--output", "-o", default="contacts.abook", help="Output file path.",
+    "--output",
+    "-o",
+    default="contacts.abook",
+    help="Output file path.",
 )
 @click.pass_context
 def export_cmd(ctx: click.Context, fmt: str, output: str) -> None:
@@ -154,7 +164,10 @@ def birthday_mail(ctx: click.Context, tomorrow: bool) -> None:
     content_dir = _content_dir(ctx)
     label = "tomorrow" if tomorrow else "today"
     count = send_birthday_mail(
-        content_dir, cfg.mail_to, cfg.mail_from, tomorrow=tomorrow,
+        content_dir,
+        cfg.mail_to,
+        cfg.mail_from,
+        tomorrow=tomorrow,
     )
     if count:
         click.echo(f"Sent {label} birthday reminder for {count} contact(s).")
@@ -183,7 +196,9 @@ def check(ctx: click.Context) -> None:
     fixed = 0
     for i, dupe in enumerate(dupes, 1):
         click.echo(f"── [{i}/{len(dupes)}] UID: {dupe.uid} ──")
-        click.echo(f"  Keep: {dupe.recommended.get('name')} ({dupe.recommended['_path'].name})")
+        click.echo(
+            f"  Keep: {dupe.recommended.get('name')} ({dupe.recommended['_path'].name})"
+        )
         for old in dupe.to_remove:
             click.echo(f"  Delete: {old.get('name')} ({old['_path'].name})")
         click.echo()
@@ -397,7 +412,13 @@ def delete_cmd(ctx: click.Context) -> None:
         click.echo(f"── [{i}/{len(contacts)}] {'─' * 50}")
         click.echo(format_summary(data))
         click.echo()
-        raw = click.prompt("  d=delete  Enter=skip  q=quit >", default="", show_default=False).strip().lower()
+        raw = (
+            click.prompt(
+                "  d=delete  Enter=skip  q=quit >", default="", show_default=False
+            )
+            .strip()
+            .lower()
+        )
         if raw == "q":
             break
         if raw == "d":
@@ -457,12 +478,15 @@ def famille(ctx: click.Context, check: bool, query: str | None) -> None:
     if query:
         q = query.lower()
         fctx.famille_contacts = [
-            c for c in fctx.all_contacts
+            c
+            for c in fctx.all_contacts
             if q in (c.get("name") or "").lower() or q in (c.get("slug") or "").lower()
         ]
 
     if not fctx.famille_contacts:
-        click.echo("No famille contacts found." if not query else f"No match for '{query}'.")
+        click.echo(
+            "No famille contacts found." if not query else f"No match for '{query}'."
+        )
         return
 
     # --check mode: verify and fix consistency.

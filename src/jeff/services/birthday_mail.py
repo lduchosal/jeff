@@ -51,7 +51,10 @@ def send_birthday_mail(
     mail_from: str = "jeff@localhost",
     tomorrow: bool = False,
 ) -> int:
-    """Send birthday reminder via sendmail. Return number of contacts."""
+    """Send birthday reminder via sendmail.
+
+    Return number of contacts.
+    """
     target_date = date.today() + timedelta(days=1) if tomorrow else date.today()
     label = "Anniversaires demain" if tomorrow else "Anniversaires aujourd'hui"
     contacts = find_birthdays(content_dir, target_date)

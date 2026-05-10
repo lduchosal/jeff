@@ -5,7 +5,7 @@
 groups = ["default", "dev", "publish"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:40aa1991499fdcbe22e7814e22f5e1323049f86c17ddaff5370beeae16b535e3"
+content_hash = "sha256:c9e97206a5c9e111dd0211161d7db24777989d07eae2f1f5ac133ba91424d536"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -925,6 +925,17 @@ files = [
 ]
 
 [[package]]
+name = "graphviz"
+version = "0.21"
+requires_python = ">=3.9"
+summary = "Simple Python interface for Graphviz"
+groups = ["default"]
+files = [
+    {file = "graphviz-0.21-py3-none-any.whl", hash = "sha256:54f33de9f4f911d7e84e4191749cac8cc5653f815b06738c54db9a15ab8b1e42"},
+    {file = "graphviz-0.21.tar.gz", hash = "sha256:20743e7183be82aaaa8ad6c93f8893c923bd6658a04c32ee115edb3c8a835f78"},
+]
+
+[[package]]
 name = "h11"
 version = "0.16.0"
 requires_python = ">=3.8"
@@ -1771,7 +1782,7 @@ files = [
 
 [[package]]
 name = "pdm"
-version = "2.26.8"
+version = "2.26.9"
 requires_python = ">=3.9"
 summary = "A modern Python package and dependency manager supporting the latest PEP standards"
 groups = ["dev"]
@@ -1802,8 +1813,8 @@ dependencies = [
     "virtualenv>=20",
 ]
 files = [
-    {file = "pdm-2.26.8-py3-none-any.whl", hash = "sha256:d6c77897c0df8f7e725526bfa7855fded4c2e6c7efc7400768a54f11b7fcc7f6"},
-    {file = "pdm-2.26.8.tar.gz", hash = "sha256:f53a20b4b6beaa88da577a7413ebbb51bee534441339b006dba2260edbc81757"},
+    {file = "pdm-2.26.9-py3-none-any.whl", hash = "sha256:a00835262cde339bf5374b8e061e424f405ed13a240620759bbbabd8f86e5753"},
+    {file = "pdm-2.26.9.tar.gz", hash = "sha256:6f7279b5e54b2948db3dcc1495197e9d0b2c8643e8159cc835e22d8f9af083b5"},
 ]
 
 [[package]]

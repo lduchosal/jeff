@@ -370,7 +370,10 @@ def _check_in_list(
 
 
 def apply_fix(inconsistency: Inconsistency, by_slug: dict[str, dict]) -> str | None:
-    """Apply a fix for an inconsistency. Return summary or None."""
+    """Apply a fix for an inconsistency.
+
+    Return summary or None.
+    """
     target = by_slug.get(inconsistency.fix_contact)
     if not target or not target.get("_path"):
         return None
