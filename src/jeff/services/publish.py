@@ -169,6 +169,12 @@ def build_site(
         dc = _DotDict(contact)
         dc["is_birthday"] = dc.get("slug") in birthday_slugs
         dc["birthday_message"] = bday_msg if dc["is_birthday"] else ""
+        # Compute phone_cell at render time from phones list if not in frontmatter.
+        if not dc.get("phone_cell") and dc.get("phones"):
+            phones = dc["phones"]
+            cell = next((p for p in phones if p.get("type") == "cell"), None)
+            pref = next((p for p in phones if p.get("pref")), phones[0])
+            dc["phone_cell"] = (cell or pref).get("number", "")
         html = contact_tpl.render(contact=dc)
         slug = contact.get("slug", "contact")
         _log.debug("Render %s.html", slug)
