@@ -274,18 +274,18 @@ def delete_cmd(ctx: click.Context) -> None:
         click.echo("No contacts found.", err=True)
         sys.exit(1)
 
-    # Load active contacts (not already archived or marked for deletion).
+    # Load archived contacts — candidates for deletion.
     contacts = []
     for md in sorted(content_dir.glob("*.md")):
         data = load_contact(md)
-        if data and data.get("name") and data.get("status") not in ("archivé", "supprimé"):
+        if data and data.get("name") and data.get("status") == "archivé":
             contacts.append(data)
 
     if not contacts:
-        click.echo("No contacts to review.")
+        click.echo("No archived contacts to review.")
         return
 
-    click.echo(f"\n{len(contacts)} contacts")
+    click.echo(f"\n{len(contacts)} archived contacts")
     click.echo("d=delete  Enter=skip  q=quit\n")
 
     marked: list[dict] = []
