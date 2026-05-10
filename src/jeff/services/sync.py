@@ -31,7 +31,10 @@ class SyncResult:
 
 
 def run_sync(
-    cfg: JeffConfig, full: bool = False, progress: ProgressFn | None = None,
+    cfg: JeffConfig,
+    full: bool = False,
+    progress: ProgressFn | None = None,
+    writeback_gender: bool = False,
 ) -> SyncResult:
     """Run a full sync cycle: fetch, transform, writeback."""
     log = progress or _noop
@@ -95,9 +98,11 @@ def run_sync(
         log("Writing back URLs...")
     url_count = _writeback_urls(cfg, client, updated, new_state, content_dir, log)
 
-    # Writeback: gender.
-    log("Writing back gender...")
-    gender_count = _writeback_gender(client, new_state, content_dir, log)
+    # Writeback: gender (only when explicitly requested — slow operation).
+    gender_count = 0
+    if writeback_gender:
+        log("Writing back gender...")
+        gender_count = _writeback_gender(client, new_state, content_dir, log)
 
     # Save state.
     new_state.save(state_path)

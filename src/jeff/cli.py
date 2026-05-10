@@ -54,12 +54,16 @@ def _content_dir(ctx: click.Context) -> Path:
 
 @cli.command()
 @click.option("--full", is_flag=True, help="Force full sync (ignore cached state).")
+@click.option("--writeback-gender", is_flag=True, help="Push gender to CardDAV (slow).")
 @click.pass_context
-def sync(ctx: click.Context, full: bool) -> None:
+def sync(ctx: click.Context, full: bool, writeback_gender: bool) -> None:
     """Sync contacts from CardDAV to Markdown files."""
     from jeff.services.sync import run_sync
 
-    result = run_sync(ctx.obj["cfg"], full=full, progress=click.echo)
+    result = run_sync(
+        ctx.obj["cfg"], full=full, progress=click.echo,
+        writeback_gender=writeback_gender,
+    )
     if not result.written and not result.removed:
         click.echo("Already up to date.")
     else:
