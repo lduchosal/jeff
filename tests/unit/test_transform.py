@@ -52,6 +52,16 @@ VCARD_MULTILINE_ADR = (
     "END:VCARD"
 )
 
+VCARD_MULTILINE_NOTE = (
+    "BEGIN:VCARD\r\n"
+    "VERSION:3.0\r\n"
+    "UID:urn:uuid:multiline-note\r\n"
+    "FN:Test Note\r\n"
+    "N:Note;Test;;;\r\n"
+    "NOTE:Premiere ligne\\nDeuxieme ligne\\nTroisieme ligne\r\n"
+    "END:VCARD"
+)
+
 VCARD_MULTI_ORG = """\
 BEGIN:VCARD
 VERSION:3.0
@@ -134,6 +144,20 @@ class TestParseVcard:
         assert data["positions"][0]["title"] == "CEO"
         assert data["positions"][1]["org"] == "Beta GmbH"
         assert data["positions"][1]["title"] == "Advisor"
+
+    def test_multiline_note_preserved(self) -> None:
+        """Multi-line NOTE preserves newlines in frontmatter."""
+        import yaml
+
+        data = parse_vcard(VCARD_MULTILINE_NOTE)
+        data.pop("_photo_data", None)
+        fm = render_frontmatter(data)
+        yaml_text = fm.strip().removeprefix("---").removesuffix("---").strip()
+        parsed = yaml.safe_load(yaml_text)
+        note = parsed["note"]
+        assert "Premiere ligne" in note
+        assert "Deuxieme ligne" in note
+        assert "\n" in note  # Newlines are preserved, not collapsed.
 
     def test_multiline_address(self) -> None:
         """Multi-line street in ADR produces valid YAML frontmatter."""

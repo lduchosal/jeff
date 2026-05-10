@@ -461,6 +461,10 @@ body {
   text-decoration: underline;
 }
 
+.prose--pre {
+  white-space: pre-line;
+}
+
 /* --- Dashboard --- */
 .dashboard-stats {
   display: flex;

@@ -124,7 +124,7 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
             if atype:
                 entry["type"] = atype
             if a.street:
-                entry["street"] = a.street
+                entry["street"] = _collapse_newlines(a.street) if "\n" in a.street else a.street
             if a.city:
                 entry["city"] = a.city
             if a.region:
@@ -207,15 +207,17 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
     return data
 
 
+def _collapse_newlines(value: str) -> str:
+    """Collapse multi-line strings into a single line joined by ', '."""
+    return ", ".join(line.strip() for line in value.splitlines() if line.strip())
+
+
 def _yaml_value(value: Any) -> str:
     """Format a value for YAML output."""
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, str):
         s: str = value
-        # Collapse multi-line values (e.g. vCard ADR street with \n).
-        if "\n" in s:
-            s = ", ".join(line.strip() for line in s.splitlines() if line.strip())
         # Quote strings containing special chars.
         if any(c in s for c in ":{}[]#&*!|>'\",@`"):
             return f'"{s}"'
@@ -261,8 +263,16 @@ def render_frontmatter(data: dict[str, Any]) -> str:
         "rev",
     ]
     for key in scalars:
-        if key in data:
-            lines.append(f"{key}: {_yaml_value(data[key])}")
+        if key not in data:
+            continue
+        val = data[key]
+        # Notes with newlines use YAML block scalar to preserve formatting.
+        if key == "note" and isinstance(val, str) and "\n" in val:
+            lines.append("note: |")
+            for note_line in val.splitlines():
+                lines.append(f"  {note_line}")
+        else:
+            lines.append(f"{key}: {_yaml_value(val)}")
 
     # Tags
     if "tags" in data:
