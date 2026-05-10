@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Généalogie</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/contact.css">
+</head>
+<body>
+
+<div class="contact-page" style="display: block;">
+
+  <header class="contact-header" style="border-bottom: none; padding-bottom: 0;">
+    <div class="contact-header__info">
+      <h1 class="contact-name">Généalogie</h1>
+      <p class="contact-title">{{ tree_count }} famille{{ 's' if tree_count != 1 }}</p>
+    </div>
+  </header>
+
+  <p style="margin: var(--space-3) 0;"><a href="index.html">← Retour aux contacts</a></p>
+
+  {% for tree_html in trees_html %}
+  <section class="dashboard-section">
+    <div class="tree-container">
+      <ul class="tree">
+        {{ tree_html }}
+      </ul>
+    </div>
+  </section>
+  {% endfor %}
+
+</div>
+
+</body>
+</html>

@@ -18,6 +18,8 @@
     </div>
   </header>
 
+  <p style="margin: var(--space-2) 0;"><a href="genealogie.html">Arbre généalogique</a></p>
+
   <div class="dashboard-stats">
     {% for rel, count in stats.by_relation.items() %}
       <span class="stat-badge stat-badge--{{ rel }}">{{ rel | title }} {{ count }}</span>

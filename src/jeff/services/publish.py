@@ -222,6 +222,21 @@ def build_site(
     )
     (output_dir / "index.html").write_text(index_html, encoding="utf-8")
 
+    # Render genealogy page.
+    from jeff.services.genealogy import build_family_trees, tree_to_html
+    from markupsafe import Markup
+
+    trees = build_family_trees(content_dir)
+    if trees:
+        genealogy_tpl = env.get_template("genealogie.html")
+        trees_html = [Markup(tree_to_html(t)) for t in trees]
+        gen_html = genealogy_tpl.render(
+            trees_html=trees_html,
+            tree_count=len(trees),
+        )
+        (output_dir / "genealogie.html").write_text(gen_html, encoding="utf-8")
+        _log.debug("Rendered genealogie.html with %d tree(s)", len(trees))
+
     return len(contacts)
 
 
