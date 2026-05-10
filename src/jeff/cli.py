@@ -263,6 +263,67 @@ def genre(ctx: click.Context) -> None:
     click.echo(f"\nSet genre on {edited} contact(s).")
 
 
+@cli.command(name="delete")
+@click.pass_context
+def delete_cmd(ctx: click.Context) -> None:
+    """Mark contacts for deletion, then confirm."""
+    from jeff.services.triage import load_contact, save_triage
+
+    content_dir = _content_dir(ctx)
+    if not content_dir.is_dir():
+        click.echo("No contacts found.", err=True)
+        sys.exit(1)
+
+    # Load active contacts (not already archived or marked for deletion).
+    contacts = []
+    for md in sorted(content_dir.glob("*.md")):
+        data = load_contact(md)
+        if data and data.get("name") and data.get("status") not in ("archivé", "supprimé"):
+            contacts.append(data)
+
+    if not contacts:
+        click.echo("No contacts to review.")
+        return
+
+    click.echo(f"\n{len(contacts)} contacts")
+    click.echo("d=delete  Enter=skip  q=quit\n")
+
+    marked: list[dict] = []
+    for i, data in enumerate(contacts, 1):
+        tags = ", ".join(data.get("tags", []))
+        note = data.get("note", "")
+        detail = f" ({tags})" if tags else ""
+        if note:
+            detail += f" — {note[:40]}"
+        raw = click.prompt(
+            f"  [{i}/{len(contacts)}] {data.get('name')}{detail}",
+            default="", show_default=False,
+        ).strip().lower()
+        if raw == "q":
+            break
+        if raw == "d":
+            marked.append(data)
+            click.echo(f"    ✗ marked for deletion")
+
+    if not marked:
+        click.echo("\nNo contacts marked.")
+        return
+
+    # Confirmation.
+    click.echo(f"\n{len(marked)} contacts marked for deletion:")
+    for data in marked:
+        click.echo(f"  ✗ {data.get('name')}")
+    confirm = click.prompt("\nConfirm? (y/n)", default="n").strip().lower()
+    if confirm != "y":
+        click.echo("Cancelled.")
+        return
+
+    for data in marked:
+        save_triage(data["_path"], {"status": "supprimé"})
+    click.echo(f"\n{len(marked)} contact(s) marked as 'supprimé'.")
+    click.echo("Next jeff sync will delete them from CardDAV.")
+
+
 @cli.command()
 @click.option("--check", is_flag=True, help="Check & fix bidirectional consistency.")
 @click.pass_context
