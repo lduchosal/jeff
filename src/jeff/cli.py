@@ -113,6 +113,28 @@ def publish(ctx: click.Context, output: str) -> None:
     click.echo(f"Published {count} contact(s) to {output_dir}")
 
 
+@cli.command(name="birthday-mail")
+@click.option("--tomorrow", is_flag=True, help="Send for tomorrow instead of today.")
+@click.pass_context
+def birthday_mail(ctx: click.Context, tomorrow: bool) -> None:
+    """Send birthday reminder email via sendmail."""
+    from jeff.services.birthday_mail import send_birthday_mail
+
+    cfg = ctx.obj["cfg"]
+    if not cfg.mail_to:
+        click.echo("Error: mail_to not configured in .jeff", err=True)
+        sys.exit(1)
+    content_dir = _content_dir(ctx)
+    label = "tomorrow" if tomorrow else "today"
+    count = send_birthday_mail(
+        content_dir, cfg.mail_to, cfg.mail_from, tomorrow=tomorrow,
+    )
+    if count:
+        click.echo(f"Sent {label} birthday reminder for {count} contact(s).")
+    else:
+        click.echo(f"No birthdays {label}.")
+
+
 @cli.command()
 @click.pass_context
 def check(ctx: click.Context) -> None:
@@ -186,6 +208,14 @@ def cron(ctx: click.Context, full: bool, output: str) -> None:
             click.echo(f"  🎂 {data.get('name')} ({status})")
     else:
         click.echo("  No birthdays today.")
+
+    # 2b. Birthday mail.
+    if cfg.mail_to:
+        from jeff.services.birthday_mail import send_birthday_mail
+
+        count_mail = send_birthday_mail(content_dir, cfg.mail_to, cfg.mail_from)
+        if count_mail:
+            click.echo(f"  Mail sent for {count_mail} contact(s).")
 
     # 3. Publish.
     click.echo("\n── Publish ──")

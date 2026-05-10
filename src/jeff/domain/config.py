@@ -26,6 +26,8 @@ class JeffConfig:
     content_dir: str = "content/contacts"
     photo_dir: str = "static/photos"
     publish_url: str = ""
+    mail_to: str = ""
+    mail_from: str = "jeff@localhost"
     jeff_file: Path | None = None
 
     def validate(self) -> list[str]:
@@ -128,6 +130,13 @@ def load_config(config_path: str | None = None) -> JeffConfig:
         ),
         publish_url=(
             os.environ.get("JEFF_PUBLISH_URL") or file_data.get("publish_url", "")
+        ),
+        mail_to=(
+            os.environ.get("JEFF_MAIL_TO") or file_data.get("mail_to", "")
+        ),
+        mail_from=(
+            os.environ.get("JEFF_MAIL_FROM")
+            or file_data.get("mail_from", "jeff@localhost")
         ),
         jeff_file=jeff_path,
     )
