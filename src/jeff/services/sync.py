@@ -111,7 +111,7 @@ def run_sync(
     # Writeback: CRM URL.
     if cfg.publish_url and updated:
         log("Writing back URLs...")
-    url_count = _writeback_urls(cfg, client, updated, new_state, content_dir, log)
+    url_count = _writeback_urls(cfg, client, updated, new_state, log)
 
     # Writeback: gender (only when explicitly requested — slow operation).
     gender_count = 0
@@ -168,7 +168,6 @@ def _writeback_urls(
     client: CardDAVClient,
     updated: list[Contact],
     new_state: SyncState,
-    content_dir: Path,
     log: ProgressFn = _noop,
 ) -> int:
     """Write CRM profile URLs back to CardDAV."""

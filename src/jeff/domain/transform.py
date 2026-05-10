@@ -53,7 +53,7 @@ def slugify(text: str) -> str:
     slug = re.sub(r"[òóôõö]", "o", slug)
     slug = re.sub(r"[ùúûü]", "u", slug)
     slug = re.sub(r"[ýÿ]", "y", slug)
-    slug = re.sub(r"ñ", "n", slug)
+    slug = slug.replace("ñ", "n")
     slug = re.sub(r"[çć]", "c", slug)
     slug = re.sub(r"[^a-z0-9]+", "-", slug)
     slug = slug.strip("-")
@@ -187,10 +187,10 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
         bday_val = vc.bday.value
         try:
             if hasattr(bday_val, "month"):
-                sign_name, sign_emoji = zodiac_sign(bday_val.month, bday_val.day)
+                sign_name, _ = zodiac_sign(bday_val.month, bday_val.day)
             else:
                 parts = str(bday_val).split("-")
-                sign_name, sign_emoji = zodiac_sign(int(parts[1]), int(parts[2]))
+                sign_name, _ = zodiac_sign(int(parts[1]), int(parts[2]))
             data["signe"] = sign_name
         except (IndexError, ValueError):
             pass

@@ -182,7 +182,7 @@ def build_site(
             bday_s = str(dc["birthday"])
             try:
                 parts = bday_s.split("-")
-                name, emoji = zodiac_sign(int(parts[1]), int(parts[2]))
+                name, _ = zodiac_sign(int(parts[1]), int(parts[2]))
                 dc["signe"] = name
             except (IndexError, ValueError):
                 pass

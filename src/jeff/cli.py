@@ -20,6 +20,8 @@ import click
 from jeff import __version__
 from jeff.domain.config import load_config
 
+_NO_CONTACTS = "No contacts found."
+
 
 @click.group()
 @click.option("--config", "config_file", help="Path to a .jeff config file.")
@@ -168,7 +170,7 @@ def check(ctx: click.Context) -> None:
 
     content_dir = _content_dir(ctx)
     if not content_dir.is_dir():
-        click.echo("No contacts found.", err=True)
+        click.echo(_NO_CONTACTS, err=True)
         sys.exit(1)
 
     dupes = find_duplicates(content_dir)
@@ -267,7 +269,7 @@ def triage(ctx: click.Context, show_all: bool) -> None:
 
     content_dir = _content_dir(ctx)
     if not content_dir.is_dir():
-        click.echo("No contacts found.", err=True)
+        click.echo(_NO_CONTACTS, err=True)
         sys.exit(1)
 
     files = sorted(content_dir.glob("*.md"))
@@ -337,7 +339,7 @@ def genre(ctx: click.Context) -> None:
 
     content_dir = _content_dir(ctx)
     if not content_dir.is_dir():
-        click.echo("No contacts found.", err=True)
+        click.echo(_NO_CONTACTS, err=True)
         sys.exit(1)
 
     contacts = load_contacts_without_genre(content_dir)
@@ -373,7 +375,7 @@ def delete_cmd(ctx: click.Context) -> None:
 
     content_dir = _content_dir(ctx)
     if not content_dir.is_dir():
-        click.echo("No contacts found.", err=True)
+        click.echo(_NO_CONTACTS, err=True)
         sys.exit(1)
 
     # Load contacts with delete field empty (not yet decided).
@@ -446,7 +448,7 @@ def famille(ctx: click.Context, check: bool, query: str | None) -> None:
 
     content_dir = _content_dir(ctx)
     if not content_dir.is_dir():
-        click.echo("No contacts found.", err=True)
+        click.echo(_NO_CONTACTS, err=True)
         sys.exit(1)
 
     fctx = load_famille_context(content_dir)
