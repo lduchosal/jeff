@@ -11,7 +11,12 @@ import requests
 from jeff.domain.carddav import CardDAVClient, CardDAVConfig, Contact, SyncState
 from jeff.domain.config import JeffConfig
 from jeff.domain.transform import contact_to_markdown, parse_vcard
-from jeff.domain.urlback import build_profile_url, inject_crm_url, inject_gender
+from jeff.domain.urlback import (
+    build_profile_url,
+    inject_crm_url,
+    inject_gender,
+    inject_related,
+)
 from jeff.services.triage import load_contact
 
 # Progress callback type: (message: str) -> None
@@ -31,6 +36,7 @@ class SyncResult:
     deleted_remote: list[str]
     url_count: int
     gender_count: int
+    famille_count: int = 0
     error: str = ""
 
 
@@ -39,6 +45,7 @@ def run_sync(
     full: bool = False,
     progress: ProgressFn | None = None,
     writeback_gender: bool = False,
+    writeback_famille: bool = False,
 ) -> SyncResult:
     """Run a full sync cycle: fetch, transform, writeback."""
     log = progress or _noop
@@ -112,6 +119,12 @@ def run_sync(
         log("Writing back gender...")
         gender_count = _writeback_gender(client, new_state, content_dir, log)
 
+    # Writeback: family links (only when explicitly requested — slow operation).
+    famille_count = 0
+    if writeback_famille:
+        log("Writing back family links...")
+        famille_count = _writeback_famille(client, new_state, content_dir, log)
+
     # Delete contacts marked as 'supprimé' from CardDAV.
     deleted_remote: list[str] = []
     slug_to_href: dict[str, str] = {}
@@ -146,6 +159,7 @@ def run_sync(
         deleted_remote=deleted_remote,
         url_count=url_count,
         gender_count=gender_count,
+        famille_count=famille_count,
     )
 
 
@@ -225,6 +239,83 @@ def _writeback_gender(
             continue  # Already correct.
         log(f"  Gender [{i}/{len(md_files)}] {md_data.get('name', '?')}")
         new_etag = client.put_contact(contact_href, new_vcard, contacts[0].etag)
+        if new_etag:
+            count += 1
+            new_state.contacts[contact_href]["etag"] = new_etag
+    return count
+
+
+def _writeback_famille(
+    client: CardDAVClient,
+    new_state: SyncState,
+    content_dir: Path,
+    log: ProgressFn = _noop,
+) -> int:
+    """Write family RELATED properties back to CardDAV."""
+    if not content_dir.is_dir():
+        return 0
+    # Build slug→href and slug→uid lookups.
+    slug_to_href: dict[str, str] = {}
+    slug_to_uid: dict[str, str] = {}
+    for href, info in new_state.contacts.items():
+        s = info.get("slug", "")
+        if s:
+            slug_to_href[s] = href
+
+    # First pass: collect UIDs from all contacts.
+    from jeff.services.famille import _parse_slug_list
+
+    for md_path in sorted(content_dir.glob("*.md")):
+        md_data = load_contact(md_path)
+        if md_data and md_data.get("uid") and md_data.get("slug"):
+            uid = str(md_data["uid"])
+            if uid.startswith("urn:uuid:"):
+                uid = uid[len("urn:uuid:"):]
+            slug_to_uid[md_data["slug"]] = uid
+
+    count = 0
+    md_files = sorted(content_dir.glob("*.md"))
+    for i, md_path in enumerate(md_files, 1):
+        md_data = load_contact(md_path)
+        if not md_data or md_data.get("relation") != "famille":
+            continue
+        slug = md_data.get("slug", "")
+        contact_href = slug_to_href.get(slug)
+        if not contact_href:
+            continue
+
+        # Build RELATED list from frontmatter fields.
+        relations: list[tuple[str, str]] = []
+        for field, rtype in [
+            ("pere", "parent"), ("mere", "parent"),
+            ("conjoint", "spouse"),
+        ]:
+            target_slug = md_data.get(field, "")
+            if target_slug and target_slug in slug_to_uid:
+                relations.append((rtype, slug_to_uid[target_slug]))
+        for field, rtype in [
+            ("enfants", "child"), ("freres_soeurs", "sibling"),
+        ]:
+            for target_slug in _parse_slug_list(md_data.get(field)):
+                if target_slug in slug_to_uid:
+                    relations.append((rtype, slug_to_uid[target_slug]))
+
+        if not relations:
+            continue
+
+        # Fetch current vCard.
+        contacts = client.fetch_contacts(
+            contact_href.rsplit("/", 1)[0] + "/", [contact_href]
+        )
+        if not contacts:
+            continue
+        new_vcard = inject_related(contacts[0].vcard_raw, relations)
+        if new_vcard is None:
+            continue
+        log(f"  Family [{i}/{len(md_files)}] {md_data.get('name', '?')}")
+        new_etag = client.put_contact(
+            contact_href, new_vcard, contacts[0].etag
+        )
         if new_etag:
             count += 1
             new_state.contacts[contact_href]["etag"] = new_etag

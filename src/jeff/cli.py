@@ -55,8 +55,9 @@ def _content_dir(ctx: click.Context) -> Path:
 @cli.command()
 @click.option("--full", is_flag=True, help="Force full sync (ignore cached state).")
 @click.option("--writeback-gender", is_flag=True, help="Push gender to CardDAV (slow).")
+@click.option("--writeback-famille", is_flag=True, help="Push family links to CardDAV (slow).")
 @click.pass_context
-def sync(ctx: click.Context, full: bool, writeback_gender: bool) -> None:
+def sync(ctx: click.Context, full: bool, writeback_gender: bool, writeback_famille: bool) -> None:
     """Sync contacts from CardDAV to Markdown files."""
     from jeff.services.sync import run_sync
 
@@ -65,6 +66,7 @@ def sync(ctx: click.Context, full: bool, writeback_gender: bool) -> None:
         full=full,
         progress=click.echo,
         writeback_gender=writeback_gender,
+        writeback_famille=writeback_famille,
     )
     if result.error:
         sys.exit(1)
@@ -83,6 +85,8 @@ def sync(ctx: click.Context, full: bool, writeback_gender: bool) -> None:
             click.echo(f"URL written back: {result.url_count} contact(s)")
         if result.gender_count:
             click.echo(f"Gender written back: {result.gender_count} contact(s)")
+        if result.famille_count:
+            click.echo(f"Family links written back: {result.famille_count} contact(s)")
         if result.deleted_remote:
             click.echo(f"Deleted from CardDAV: {len(result.deleted_remote)} contact(s)")
             for name in sorted(result.deleted_remote):

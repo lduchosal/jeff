@@ -244,6 +244,20 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
         elif val == "F":
             data["genre"] = "femme"
 
+    # RELATED properties (vCard 4.0 family links).
+    related_props = vc.contents.get("related", [])
+    if related_props:
+        for rel in related_props:
+            rtype = ""
+            types = rel.params.get("TYPE", [])
+            if types:
+                rtype = types[0].lower()
+            uid_val = rel.value
+            if uid_val.startswith("urn:uuid:"):
+                uid_val = uid_val[len("urn:uuid:"):]
+            if rtype and uid_val:
+                data.setdefault("_related", []).append((rtype, uid_val))
+
     return data
 
 
