@@ -53,16 +53,28 @@ def record_birthday_exchange(
     """
     d = target_date or date.today()
     date_str = d.isoformat()
-    exchange = f"{date_str}: {BIRTHDAY_MESSAGE}"
 
     path = contact.get("_path")
     if not path:
         return False
 
-    # Check if already recorded today.
-    existing = contact.get("echanges", "")
-    if isinstance(existing, str) and date_str in existing:
+    # Read file, check if already recorded today.
+    text = path.read_text(encoding="utf-8")
+    if f"- {date_str} anniversaire" in text:
         return False
 
-    save_triage(path, {"echanges": exchange})
+    # Append to echanges list before the closing ---.
+    lines = text.splitlines()
+    new_lines: list[str] = []
+    inserted = False
+    for line in lines:
+        # Insert before the last ---.
+        if line.strip() == "---" and new_lines and not inserted:
+            # If echanges section doesn't exist yet, add it.
+            if "echanges:" not in text:
+                new_lines.append("echanges:")
+            new_lines.append(f"  - {date_str} anniversaire")
+            inserted = True
+        new_lines.append(line)
+    path.write_text("\n".join(new_lines), encoding="utf-8")
     return True
