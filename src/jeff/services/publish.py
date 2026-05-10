@@ -31,7 +31,11 @@ def _parse_frontmatter(path: Path) -> dict[str, Any]:
     for i, line in enumerate(lines[1:], start=1):
         if line.strip() == "---":
             yaml_text = "\n".join(lines[1:i])
-            return yaml.safe_load(yaml_text) or {}
+            try:
+                return yaml.safe_load(yaml_text) or {}
+            except yaml.YAMLError:
+                _log.warning("Corrupt frontmatter in %s, skipping", path.name)
+                return {}
     return {}
 
 

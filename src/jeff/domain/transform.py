@@ -395,7 +395,11 @@ def contact_to_markdown(
         if lines_ex and lines_ex[0].strip() == "---":
             for idx, line in enumerate(lines_ex[1:], start=1):
                 if line.strip() == "---":
-                    old = yaml.safe_load("\n".join(lines_ex[1:idx])) or {}
+                    try:
+                        old = yaml.safe_load("\n".join(lines_ex[1:idx])) or {}
+                    except yaml.YAMLError:
+                        _log.warning("Corrupt frontmatter in %s, skipping preservation", md_path.name)
+                        break
                     for k in _triage_keys:
                         if old.get(k):
                             data[k] = old[k]

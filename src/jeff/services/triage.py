@@ -22,7 +22,10 @@ def load_contact(path: Path) -> dict[str, Any] | None:
         return None
     for i, line in enumerate(lines[1:], start=1):
         if line.strip() == "---":
-            data = yaml.safe_load("\n".join(lines[1:i])) or {}
+            try:
+                data = yaml.safe_load("\n".join(lines[1:i])) or {}
+            except yaml.YAMLError:
+                return None
             data["_path"] = path
             return data
     return None
