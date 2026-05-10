@@ -185,15 +185,15 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
     if hasattr(vc, "bday"):
         data["birthday"] = vc.bday.value
         bday_val = vc.bday.value
-        try:
+        from contextlib import suppress
+
+        with suppress(IndexError, ValueError):
             if hasattr(bday_val, "month"):
                 sign_name, _ = zodiac_sign(bday_val.month, bday_val.day)
             else:
                 parts = str(bday_val).split("-")
                 sign_name, _ = zodiac_sign(int(parts[1]), int(parts[2]))
             data["signe"] = sign_name
-        except (IndexError, ValueError):
-            pass
 
     # Categories -> tags
     cats = vc.contents.get("categories", [])
@@ -252,9 +252,7 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
             types = rel.params.get("TYPE", [])
             if types:
                 rtype = types[0].lower()
-            uid_val = rel.value
-            if uid_val.startswith("urn:uuid:"):
-                uid_val = uid_val[len("urn:uuid:"):]
+            uid_val = rel.value.removeprefix("urn:uuid:")
             if rtype and uid_val:
                 data.setdefault("_related", []).append((rtype, uid_val))
 

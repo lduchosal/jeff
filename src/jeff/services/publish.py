@@ -177,15 +177,15 @@ def build_site(
             dc["phone_cell"] = (cell or pref).get("number", "")
         # Compute zodiac sign if not in frontmatter.
         if not dc.get("signe") and dc.get("birthday"):
+            from contextlib import suppress
+
             from jeff.domain.transform import zodiac_sign
 
             bday_s = str(dc["birthday"])
-            try:
+            with suppress(IndexError, ValueError):
                 parts = bday_s.split("-")
                 name, _ = zodiac_sign(int(parts[1]), int(parts[2]))
                 dc["signe"] = name
-            except (IndexError, ValueError):
-                pass
         html = contact_tpl.render(contact=dc)
         slug = contact.get("slug", "contact")
         _log.debug("Render %s.html", slug)
@@ -223,8 +223,9 @@ def build_site(
     (output_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     # Render genealogy page.
-    from jeff.services.genealogy import build_family_trees, tree_to_svg
     from markupsafe import Markup
+
+    from jeff.services.genealogy import build_family_trees, tree_to_svg
 
     trees = build_family_trees(content_dir)
     if trees:

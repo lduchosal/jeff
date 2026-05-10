@@ -149,8 +149,7 @@ def tree_to_svg(root: TreeNode) -> str:
 
     _render_tree(dot, root)
 
-    svg_bytes: bytes = dot.pipe()
-    svg: str = svg_bytes.decode("utf-8")
+    svg: str = dot.pipe().decode("utf-8")
     idx = svg.find("<svg")
     if idx >= 0:
         svg = svg[idx:]

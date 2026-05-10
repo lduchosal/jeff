@@ -267,9 +267,7 @@ def _writeback_famille(
     for md_path in sorted(content_dir.glob("*.md")):
         md_data = load_contact(md_path)
         if md_data and md_data.get("uid") and md_data.get("slug"):
-            uid = str(md_data["uid"])
-            if uid.startswith("urn:uuid:"):
-                uid = uid[len("urn:uuid:"):]
+            uid = str(md_data["uid"]).removeprefix("urn:uuid:")
             slug_to_uid[md_data["slug"]] = uid
 
     count = 0
@@ -285,16 +283,18 @@ def _writeback_famille(
 
         # Build RELATED list from frontmatter fields.
         relations: list[tuple[str, str]] = []
-        for field, rtype in [
-            ("pere", "parent"), ("mere", "parent"),
+        for field, rtype in (
+            ("pere", "parent"),
+            ("mere", "parent"),
             ("conjoint", "spouse"),
-        ]:
+        ):
             target_slug = md_data.get(field, "")
             if target_slug and target_slug in slug_to_uid:
                 relations.append((rtype, slug_to_uid[target_slug]))
-        for field, rtype in [
-            ("enfants", "child"), ("freres_soeurs", "sibling"),
-        ]:
+        for field, rtype in (
+            ("enfants", "child"),
+            ("freres_soeurs", "sibling"),
+        ):
             for target_slug in _parse_slug_list(md_data.get(field)):
                 if target_slug in slug_to_uid:
                     relations.append((rtype, slug_to_uid[target_slug]))
@@ -312,9 +312,7 @@ def _writeback_famille(
         if new_vcard is None:
             continue
         log(f"  Family [{i}/{len(md_files)}] {md_data.get('name', '?')}")
-        new_etag = client.put_contact(
-            contact_href, new_vcard, contacts[0].etag
-        )
+        new_etag = client.put_contact(contact_href, new_vcard, contacts[0].etag)
         if new_etag:
             count += 1
             new_state.contacts[contact_href]["etag"] = new_etag
