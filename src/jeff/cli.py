@@ -66,6 +66,8 @@ def sync(ctx: click.Context, full: bool, writeback_gender: bool) -> None:
         progress=click.echo,
         writeback_gender=writeback_gender,
     )
+    if result.error:
+        sys.exit(1)
     if not result.written and not result.removed:
         click.echo("Already up to date.")
     else:
@@ -119,15 +121,16 @@ def cron(ctx: click.Context, full: bool, output: str) -> None:
     base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
     content_dir = _content_dir(ctx)
 
-    # 1. Sync.
+    # 1. Sync (continues on network error — local data still valid).
     click.echo("── Sync ──")
     result = run_sync(cfg, full=full, progress=click.echo)
-    if result.written:
-        click.echo(f"Written: {len(result.written)} contact(s)")
-    if result.removed:
-        click.echo(f"Removed: {len(result.removed)} contact(s)")
-    if not result.written and not result.removed:
-        click.echo("Already up to date.")
+    if not result.error:
+        if result.written:
+            click.echo(f"Written: {len(result.written)} contact(s)")
+        if result.removed:
+            click.echo(f"Removed: {len(result.removed)} contact(s)")
+        if not result.written and not result.removed:
+            click.echo("Already up to date.")
 
     # 2. Birthdays.
     click.echo("\n── Birthdays ──")

@@ -6,6 +6,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+import requests
+
 from jeff.domain.carddav import CardDAVClient, CardDAVConfig, Contact, SyncState
 from jeff.domain.config import JeffConfig
 from jeff.domain.transform import contact_to_markdown, parse_vcard
@@ -28,6 +30,7 @@ class SyncResult:
     removed: list[str]
     url_count: int
     gender_count: int
+    error: str = ""
 
 
 def run_sync(
@@ -53,7 +56,11 @@ def run_sync(
 
     # Discover addressbook.
     log("Discovering addressbooks...")
-    books = client.discover_addressbooks()
+    try:
+        books = client.discover_addressbooks()
+    except requests.ConnectionError:
+        log("Error: no internet connection. Sync skipped.")
+        return SyncResult([], [], 0, 0, error="no connection")
     if not books:
         return SyncResult([], [], 0, 0)
     addressbook_href = books[0]["href"]
