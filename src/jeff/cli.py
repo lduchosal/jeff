@@ -113,6 +113,31 @@ def publish(ctx: click.Context, output: str) -> None:
     click.echo(f"Published {count} contact(s) to {output_dir}")
 
 
+@cli.command(name="export")
+@click.option(
+    "--format", "fmt", default="squirrelmail", help="Export format (squirrelmail).",
+)
+@click.option(
+    "--output", "-o", default="contacts.abook", help="Output file path.",
+)
+@click.pass_context
+def export_cmd(ctx: click.Context, fmt: str, output: str) -> None:
+    """Export active contacts to an address book format."""
+    from jeff.services.export import export_squirrelmail
+
+    content_dir = _content_dir(ctx)
+    cfg = ctx.obj["cfg"]
+    base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
+    output_path = base / output
+
+    if fmt == "squirrelmail":
+        count = export_squirrelmail(content_dir, output_path)
+        click.echo(f"Exported {count} contact(s) to {output_path}")
+    else:
+        click.echo(f"Unknown format: {fmt}", err=True)
+        sys.exit(1)
+
+
 @cli.command(name="birthday-mail")
 @click.option("--tomorrow", is_flag=True, help="Send for tomorrow instead of today.")
 @click.pass_context
