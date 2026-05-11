@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from jeff.domain.urlback import build_profile_url, inject_crm_url, inject_gender
+from jeff.domain.urlback import (
+    build_profile_url,
+    inject_crm_url,
+    inject_gender,
+    inject_related,
+)
 
 SAMPLE_VCARD = """\
 BEGIN:VCARD
@@ -89,6 +94,51 @@ class TestInjectGender:
         assert result is not None
         assert "X-GENDER:F" in result
         assert "X-GENDER:M" not in result
+
+
+class TestInjectRelated:
+    """Tests for RELATED property injection."""
+
+    def test_injects_related(self) -> None:
+        """Adds RELATED lines before END:VCARD."""
+        result = inject_related(SAMPLE_VCARD, [("spouse", "uid-marie")])
+        assert result is not None
+        assert "RELATED;TYPE=spouse:urn:uuid:uid-marie" in result
+
+    def test_skips_if_same(self) -> None:
+        """Returns None when RELATED already present."""
+        vcard = SAMPLE_VCARD.replace(
+            "END:VCARD",
+            "RELATED;TYPE=spouse:urn:uuid:uid-marie\nEND:VCARD",
+        )
+        result = inject_related(vcard, [("spouse", "uid-marie")])
+        assert result is None
+
+    def test_replaces_old(self) -> None:
+        """Replaces existing RELATED with new set."""
+        vcard = SAMPLE_VCARD.replace(
+            "END:VCARD",
+            "RELATED;TYPE=spouse:urn:uuid:old\nEND:VCARD",
+        )
+        result = inject_related(vcard, [("spouse", "uid-new")])
+        assert result is not None
+        assert "uid-new" in result
+        assert "old" not in result
+
+    def test_multiple_relations(self) -> None:
+        """Handles multiple RELATED entries."""
+        result = inject_related(
+            SAMPLE_VCARD,
+            [("parent", "uid-pere"), ("spouse", "uid-marie"), ("child", "uid-luc")],
+        )
+        assert result is not None
+        assert "TYPE=parent" in result
+        assert "TYPE=spouse" in result
+        assert "TYPE=child" in result
+
+    def test_empty_relations(self) -> None:
+        """Returns None for empty relations list."""
+        assert inject_related(SAMPLE_VCARD, []) is None
 
 
 class TestBuildProfileUrl:

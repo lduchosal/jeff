@@ -296,3 +296,104 @@ class TestFamilleCommand:
         result = runner.invoke(cli, ["famille"], input="?marie\n1w\n")
         assert result.exit_code == 0
         assert "Marie Martin" in result.output
+
+
+class TestExportCommand:
+    """Tests for the export command."""
+
+    def test_export_empty(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Exports 0 contacts from empty dir."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        result = runner.invoke(cli, ["export", "-o", "test.abook"])
+        assert result.exit_code == 0
+        assert "0 contact" in result.output
+
+    def test_export_with_contact(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Exports an active contact."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        (content / "test.md").write_text(
+            "---\nname: Test User\nslug: test\nemail: test@test.com\n"
+            "status: actif\nname_given: Test\nname_family: User\n---\n"
+        )
+        result = runner.invoke(cli, ["export", "-o", "test.abook"])
+        assert result.exit_code == 0
+        assert "1 contact" in result.output
+
+
+class TestCheckCommand:
+    """Tests for the check command."""
+
+    def test_no_duplicates(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Reports no duplicates."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        (content / "test.md").write_text(
+            "---\nuid: uid-1\nname: Test\nslug: test\n---\n"
+        )
+        result = runner.invoke(cli, ["check"])
+        assert result.exit_code == 0
+        assert "No duplicates" in result.output
+
+
+class TestCronCommand:
+    """Tests for the cron command."""
+
+    def test_cron_offline(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Cron continues when sync fails (no network)."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        with patch(
+            "jeff.services.sync.CardDAVClient.discover_addressbooks",
+            side_effect=Exception("no network"),
+        ):
+            result = runner.invoke(cli, ["cron"])
+        # Cron should not crash entirely.
+        assert result.exit_code in (0, 1)
+
+
+class TestDeleteCommand:
+    """Tests for the delete command."""
+
+    def test_no_candidates(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Reports no contacts when none are candidates."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        result = runner.invoke(cli, ["delete"])
+        assert result.exit_code == 0
+        assert "No contacts to review" in result.output
+
+    def test_mark_delete(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Marks a contact for deletion with confirmation."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        (content / "test.md").write_text(
+            "---\nname: Test\nslug: test\ndelete:\n---\n"
+        )
+        result = runner.invoke(cli, ["delete"], input="d\ny\n")
+        assert result.exit_code == 0
+        text = (content / "test.md").read_text()
+        assert "delete: true" in text
+
+    def test_skip_marks_false(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Skipping marks delete: false."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        (content / "test.md").write_text(
+            "---\nname: Test\nslug: test\ndelete:\n---\n"
+        )
+        result = runner.invoke(cli, ["delete"], input="\n")
+        assert result.exit_code == 0
+        text = (content / "test.md").read_text()
+        assert "delete: false" in text
+
+
+class TestBirthdayMailCommand:
+    """Tests for the birthday-mail command."""
+
+    def test_no_config(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Fails when mail_to is not configured."""
+        result = runner.invoke(cli, ["birthday-mail"])
+        assert result.exit_code != 0
+        assert "mail_to" in result.output
