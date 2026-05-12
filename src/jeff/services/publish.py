@@ -110,12 +110,15 @@ def build_site(
     css_out = output_dir / "css"
     css_out.mkdir(exist_ok=True)
 
-    # Copy CSS.
+    # Copy CSS: user-provided > bundled in package > empty placeholder.
     if css_path and css_path.is_file():
         shutil.copy2(css_path, css_out / "contact.css")
     else:
-        # Fallback: just create an empty placeholder.
-        (css_out / "contact.css").write_text("/* no css found */", encoding="utf-8")
+        bundled_css = resources.files("jeff").joinpath("static", "contact.css")
+        if hasattr(bundled_css, "is_file") and bundled_css.is_file():
+            shutil.copy2(str(bundled_css), css_out / "contact.css")
+        else:
+            (css_out / "contact.css").write_text("/* no css found */", encoding="utf-8")
 
     # Copy bundled fonts CSS and font files.
     static_dir = resources.files("jeff").joinpath("static")
