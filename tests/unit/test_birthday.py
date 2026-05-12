@@ -5,7 +5,11 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from jeff.services.birthday import BIRTHDAY_MESSAGE, find_birthdays, record_birthday_exchange
+from jeff.services.birthday import (
+    BIRTHDAY_MESSAGE,
+    find_birthdays,
+    record_birthday_exchange,
+)
 
 
 def _make_contact(tmp_path: Path, slug: str, birthday: str) -> None:

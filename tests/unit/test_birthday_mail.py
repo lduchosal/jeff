@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
 
 from jeff.services.birthday_mail import build_birthday_html
@@ -12,7 +11,7 @@ def _make_contact(tmp_path: Path, slug: str, birthday: str, phone: str = "") -> 
     """Write a contact .md with birthday."""
     (tmp_path / f"{slug}.md").write_text(
         f"---\nname: {slug}\nslug: {slug}\nbirthday: {birthday}\n"
-        f"phone: \"{phone}\"\nphone_cell: \"{phone}\"\n---\n",
+        f'phone: "{phone}"\nphone_cell: "{phone}"\n---\n',
         encoding="utf-8",
     )
 

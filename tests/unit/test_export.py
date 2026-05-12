@@ -8,7 +8,11 @@ from jeff.services.export import export_squirrelmail
 
 
 def _make_contact(
-    tmp_path: Path, slug: str, name: str, email: str, status: str = "actif",
+    tmp_path: Path,
+    slug: str,
+    name: str,
+    email: str,
+    status: str = "actif",
 ) -> None:
     """Write a contact .md file."""
     (tmp_path / f"{slug}.md").write_text(
@@ -34,7 +38,9 @@ class TestExportSquirrelmail:
     def test_skips_archived(self, tmp_path: Path) -> None:
         """Does not export archived contacts."""
         out = tmp_path / "out.abook"
-        _make_contact(tmp_path, "jean", "Jean Dupont", "jean@example.com", status="archivé")
+        _make_contact(
+            tmp_path, "jean", "Jean Dupont", "jean@example.com", status="archivé"
+        )
         count = export_squirrelmail(tmp_path, out)
         assert count == 0
 
@@ -50,7 +56,7 @@ class TestExportSquirrelmail:
         out = tmp_path / "out.abook"
         (tmp_path / "test.md").write_text(
             "---\nname: Test\nslug: test\nemail: t@t.com\n"
-            "status: actif\nnote: \"a|b\"\n---\n",
+            'status: actif\nnote: "a|b"\n---\n',
             encoding="utf-8",
         )
         export_squirrelmail(tmp_path, out)

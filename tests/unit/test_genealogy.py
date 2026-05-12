@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jeff.services.genealogy import TreeNode, build_family_trees
+from jeff.services.genealogy import build_family_trees
 
 
 def _make_contact(tmp_path: Path, slug: str, **fields: str) -> None:
@@ -30,12 +30,20 @@ class TestBuildFamilyTrees:
     def test_couple(self, tmp_path: Path) -> None:
         """Couple detected and deduplicated."""
         _make_contact(
-            tmp_path, "jean",
-            name="Jean", relation="famille", genre="homme", conjoint="marie",
+            tmp_path,
+            "jean",
+            name="Jean",
+            relation="famille",
+            genre="homme",
+            conjoint="marie",
         )
         _make_contact(
-            tmp_path, "marie",
-            name="Marie", relation="famille", genre="femme", conjoint="jean",
+            tmp_path,
+            "marie",
+            name="Marie",
+            relation="famille",
+            genre="femme",
+            conjoint="jean",
         )
         trees = build_family_trees(tmp_path)
         assert len(trees) == 1
@@ -44,12 +52,20 @@ class TestBuildFamilyTrees:
     def test_parent_child(self, tmp_path: Path) -> None:
         """Parent-child link creates tree with depth."""
         _make_contact(
-            tmp_path, "jacques",
-            name="Jacques", relation="famille", genre="homme", enfants="[jean]",
+            tmp_path,
+            "jacques",
+            name="Jacques",
+            relation="famille",
+            genre="homme",
+            enfants="[jean]",
         )
         _make_contact(
-            tmp_path, "jean",
-            name="Jean", relation="famille", genre="homme", pere="jacques",
+            tmp_path,
+            "jean",
+            name="Jean",
+            relation="famille",
+            genre="homme",
+            pere="jacques",
         )
         trees = build_family_trees(tmp_path)
         assert len(trees) == 1
@@ -65,17 +81,29 @@ class TestBuildFamilyTrees:
     def test_three_generations(self, tmp_path: Path) -> None:
         """Three-generation tree works."""
         _make_contact(
-            tmp_path, "grand",
-            name="Grand", relation="famille", genre="homme", enfants="[pere]",
+            tmp_path,
+            "grand",
+            name="Grand",
+            relation="famille",
+            genre="homme",
+            enfants="[pere]",
         )
         _make_contact(
-            tmp_path, "pere",
-            name="Pere", relation="famille", genre="homme",
-            pere="grand", enfants="[enfant]",
+            tmp_path,
+            "pere",
+            name="Pere",
+            relation="famille",
+            genre="homme",
+            pere="grand",
+            enfants="[enfant]",
         )
         _make_contact(
-            tmp_path, "enfant",
-            name="Enfant", relation="famille", genre="homme", pere="pere",
+            tmp_path,
+            "enfant",
+            name="Enfant",
+            relation="famille",
+            genre="homme",
+            pere="pere",
         )
         trees = build_family_trees(tmp_path)
         assert len(trees) == 1

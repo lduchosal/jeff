@@ -368,9 +368,7 @@ class TestDeleteCommand:
         """Marks a contact for deletion with confirmation."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
-            "---\nname: Test\nslug: test\ndelete:\n---\n"
-        )
+        (content / "test.md").write_text("---\nname: Test\nslug: test\ndelete:\n---\n")
         result = runner.invoke(cli, ["delete"], input="d\ny\n")
         assert result.exit_code == 0
         text = (content / "test.md").read_text()
@@ -380,9 +378,7 @@ class TestDeleteCommand:
         """Skipping marks delete: false."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
-            "---\nname: Test\nslug: test\ndelete:\n---\n"
-        )
+        (content / "test.md").write_text("---\nname: Test\nslug: test\ndelete:\n---\n")
         result = runner.invoke(cli, ["delete"], input="\n")
         assert result.exit_code == 0
         text = (content / "test.md").read_text()
