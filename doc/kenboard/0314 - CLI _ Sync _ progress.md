@@ -1,11 +1,11 @@
 ---
 id: 314
-status: review
+status: done
 who: Claude
 due_date: 
-position: 1
+position: 6
 created_at: 2026-05-10T08:04:36
-updated_at: 2026-05-10T08:09:06
+updated_at: 2026-05-10T08:54:32
 ---
 
 # CLI / Sync / progress

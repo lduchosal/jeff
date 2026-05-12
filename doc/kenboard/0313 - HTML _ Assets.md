@@ -1,11 +1,11 @@
 ---
 id: 313
-status: review
+status: done
 who: Claude
 due_date: 
-position: 0
+position: 1
 created_at: 2026-05-10T08:02:25
-updated_at: 2026-05-10T08:09:05
+updated_at: 2026-05-10T08:54:44
 ---
 
 # HTML / Assets

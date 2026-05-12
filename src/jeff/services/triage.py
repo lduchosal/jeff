@@ -15,6 +15,24 @@ import yaml
 _TRIAGE_KEYS = ("status", "relation", "frequence", "priorite")
 
 
+def iter_contact_files(content_dir: Path) -> list[Path]:
+    """List all contact .md files (folder-per-contact layout).
+
+    Contact file = ``<content_dir>/<slug>/<slug>.md``
+    (file name matches parent directory name).
+    """
+    results: list[Path] = []
+    if not content_dir.is_dir():
+        return results
+    for d in sorted(content_dir.iterdir()):
+        if not d.is_dir():
+            continue
+        md = d / f"{d.name}.md"
+        if md.is_file():
+            results.append(md)
+    return results
+
+
 def load_contact(path: Path) -> dict[str, Any] | None:
     """Parse frontmatter from a contact .md file."""
     lines = path.read_text(encoding="utf-8").splitlines()

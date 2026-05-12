@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from jeff.services.triage import load_contact, save_triage
+from jeff.services.triage import iter_contact_files, load_contact, save_triage
 
 ROLE_MAP = {
     "f": "pere",
@@ -102,7 +102,7 @@ class FamilleContext:
 def load_famille_context(content_dir: Path) -> FamilleContext:
     """Load all contacts and prepare famille editing context."""
     ctx = FamilleContext()
-    for md in sorted(content_dir.glob("*.md")):
+    for md in iter_contact_files(content_dir):
         data = load_contact(md)
         if data and data.get("name"):
             ctx.all_contacts.append(data)

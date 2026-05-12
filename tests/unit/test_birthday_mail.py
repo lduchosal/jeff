@@ -9,7 +9,9 @@ from jeff.services.birthday_mail import build_birthday_html
 
 def _make_contact(tmp_path: Path, slug: str, birthday: str, phone: str = "") -> None:
     """Write a contact .md with birthday."""
-    (tmp_path / f"{slug}.md").write_text(
+    slug_dir = tmp_path / slug
+    slug_dir.mkdir(exist_ok=True)
+    (slug_dir / f"{slug}.md").write_text(
         f"---\nname: {slug}\nslug: {slug}\nbirthday: {birthday}\n"
         f'phone: "{phone}"\nphone_cell: "{phone}"\n---\n',
         encoding="utf-8",

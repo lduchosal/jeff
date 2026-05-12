@@ -15,6 +15,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 
 from jeff.log import get_logger
+from jeff.services.triage import iter_contact_files
 
 _log = get_logger("publish")
 
@@ -47,7 +48,7 @@ def _load_contacts(content_dir: Path) -> list[dict[str, Any]]:
     contacts: list[dict[str, Any]] = []
     if not content_dir.is_dir():
         return contacts
-    for md in sorted(content_dir.glob("*.md")):
+    for md in iter_contact_files(content_dir):
         data = _parse_frontmatter(md)
         if not data.get("name"):
             continue

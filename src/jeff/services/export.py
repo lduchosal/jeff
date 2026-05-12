@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from jeff.services.triage import load_contact
+from jeff.services.triage import iter_contact_files, load_contact
 
 
 def export_squirrelmail(content_dir: Path, output_path: Path) -> int:
@@ -35,7 +35,7 @@ def _load_active_contacts(content_dir: Path) -> list[dict[str, Any]]:
     contacts: list[dict[str, Any]] = []
     if not content_dir.is_dir():
         return contacts
-    for md in sorted(content_dir.glob("*.md")):
+    for md in iter_contact_files(content_dir):
         data = load_contact(md)
         if not data or not data.get("name"):
             continue

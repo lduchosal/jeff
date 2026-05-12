@@ -1,11 +1,11 @@
 ---
 id: 315
-status: review
+status: done
 who: Claude
 due_date: 
-position: 0
+position: 2
 created_at: 2026-05-10T08:05:57
-updated_at: 2026-05-10T08:13:51
+updated_at: 2026-05-10T08:54:33
 ---
 
 # VCARD / Notes / to html

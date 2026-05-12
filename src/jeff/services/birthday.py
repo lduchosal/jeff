@@ -6,7 +6,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from jeff.services.triage import load_contact
+from jeff.services.triage import iter_contact_files, load_contact
 
 BIRTHDAY_MESSAGE = (
     "Je vois que c'est une journ\u00e9e sp\u00e9ciale pour toi, "
@@ -26,7 +26,7 @@ def find_birthdays(
     results: list[dict[str, Any]] = []
     if not content_dir.is_dir():
         return results
-    for md in sorted(content_dir.glob("*.md")):
+    for md in iter_contact_files(content_dir):
         data = load_contact(md)
         if not data or not data.get("name"):
             continue

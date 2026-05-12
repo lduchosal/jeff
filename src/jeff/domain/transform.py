@@ -427,8 +427,9 @@ def contact_to_markdown(
     _log.debug("Transform %s → %s.md", data.get("name", "?"), slug)
 
     # Preserve hand-edited triage fields from existing frontmatter.
-    content_dir.mkdir(parents=True, exist_ok=True)
-    md_path = content_dir / f"{slug}.md"
+    contact_dir: Path = content_dir / slug
+    contact_dir.mkdir(parents=True, exist_ok=True)
+    md_path: Path = contact_dir / f"{slug}.md"
     _triage_keys = (
         "status",
         "relation",

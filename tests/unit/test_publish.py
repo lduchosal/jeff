@@ -89,8 +89,12 @@ class TestBuildSite:
         """Generates HTML files for contacts and an index."""
         content_dir = tmp_path / "content" / "contacts"
         content_dir.mkdir(parents=True)
-        (content_dir / "jean-dupont.md").write_text(SAMPLE_MD)
-        (content_dir / "marie.md").write_text(SAMPLE_MD_MINIMAL)
+        (content_dir / "jean-dupont").mkdir(exist_ok=True)
+
+        (content_dir / "jean-dupont" / "jean-dupont.md").write_text(SAMPLE_MD)
+        (content_dir / "marie").mkdir(exist_ok=True)
+
+        (content_dir / "marie" / "marie.md").write_text(SAMPLE_MD_MINIMAL)
 
         output_dir = tmp_path / "public"
         count = build_site(content_dir, output_dir)
@@ -115,7 +119,9 @@ class TestBuildSite:
         """Copies CSS file to output."""
         content_dir = tmp_path / "content" / "contacts"
         content_dir.mkdir(parents=True)
-        (content_dir / "marie.md").write_text(SAMPLE_MD_MINIMAL)
+        (content_dir / "marie").mkdir(exist_ok=True)
+
+        (content_dir / "marie" / "marie.md").write_text(SAMPLE_MD_MINIMAL)
 
         css = tmp_path / "contact.css"
         css.write_text("body { color: red; }")
@@ -130,7 +136,9 @@ class TestBuildSite:
         """Copies photo files to output."""
         content_dir = tmp_path / "content" / "contacts"
         content_dir.mkdir(parents=True)
-        (content_dir / "marie.md").write_text(SAMPLE_MD_MINIMAL)
+        (content_dir / "marie").mkdir(exist_ok=True)
+
+        (content_dir / "marie" / "marie.md").write_text(SAMPLE_MD_MINIMAL)
 
         photo_dir = tmp_path / "photos"
         photo_dir.mkdir()

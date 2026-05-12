@@ -92,7 +92,7 @@ class TestSyncCommand:
         assert "Written: 1 contact(s)" in result.output
         assert "test-user.md" in result.output
         # Check file was actually created.
-        md = jeff_env / "content" / "contacts" / "test-user.md"
+        md = jeff_env / "content" / "contacts" / "test-user" / "test-user.md"
         assert md.exists()
         assert "Test User" in md.read_text()
 
@@ -131,7 +131,9 @@ class TestPublishCommand:
         """Publishes a contact from a .md file."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text("---\nname: Test User\nslug: test\n---\n")
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text("---\nname: Test User\nslug: test\n---\n")
         result = runner.invoke(cli, ["publish"])
         assert result.exit_code == 0
         assert "1 contact" in result.output
@@ -151,7 +153,9 @@ class TestTriageCommand:
         """Can skip a contact with Enter."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text(
             "---\nname: Test User\nslug: test\nstatus:\n---\n"
         )
         result = runner.invoke(cli, ["triage"], input="s\n")
@@ -166,14 +170,16 @@ class TestTriageCommand:
         """Can mark a contact as actif with relation and priority."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text(
             "---\nname: Test User\nslug: test\nstatus:\nrelation:\n"
             "priorite:\ngenre:\n---\n"
         )
         result = runner.invoke(cli, ["triage"], input="a f h H\n")
         assert result.exit_code == 0
         assert "actif" in result.output
-        text = (content / "test.md").read_text()
+        text = (content / "test" / "test.md").read_text()
         assert "status: actif" in text
         assert "relation: famille" in text
         assert "priorite: haute" in text
@@ -183,7 +189,9 @@ class TestTriageCommand:
         """Can archive a contact."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text(
             "---\nname: Test User\nslug: test\nstatus:\n---\n"
         )
         result = runner.invoke(cli, ["triage"], input="r\n")
@@ -194,7 +202,9 @@ class TestTriageCommand:
         """Can quit early."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text(
             "---\nname: Test User\nslug: test\nstatus:\n---\n"
         )
         result = runner.invoke(cli, ["triage"], input="q\n")
@@ -216,32 +226,38 @@ class TestGenreCommand:
         """Sets genre to homme."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text(
             "---\nname: Jean Test\nslug: jean-test\ngenre:\n---\n"
         )
         result = runner.invoke(cli, ["genre"], input="h\n")
         assert result.exit_code == 0
         assert "1" in result.output
-        text = (content / "test.md").read_text()
+        text = (content / "test" / "test.md").read_text()
         assert "genre: homme" in text
 
     def test_genre_set_femme(self, runner: CliRunner, jeff_env: Path) -> None:
         """Sets genre to femme."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text(
             "---\nname: Marie Test\nslug: marie-test\ngenre:\n---\n"
         )
         result = runner.invoke(cli, ["genre"], input="f\n")
         assert result.exit_code == 0
-        text = (content / "test.md").read_text()
+        text = (content / "test" / "test.md").read_text()
         assert "genre: femme" in text
 
     def test_genre_quit(self, runner: CliRunner, jeff_env: Path) -> None:
         """Can quit early."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text("---\nname: Test\nslug: test\ngenre:\n---\n")
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text("---\nname: Test\nslug: test\ngenre:\n---\n")
         result = runner.invoke(cli, ["genre"], input="q\n")
         assert result.exit_code == 0
 
@@ -260,12 +276,16 @@ class TestFamilleCommand:
         """Assigns a family link and writes reciprocal."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "jean-dupont.md").write_text(
+        (content / "jean-dupont").mkdir(exist_ok=True)
+
+        (content / "jean-dupont" / "jean-dupont.md").write_text(
             "---\nname: Jean Dupont\nslug: jean-dupont\nname_family: Dupont\n"
             "relation: famille\ngenre: homme\npere:\nmere:\nconjoint:\n"
             "freres_soeurs: []\nenfants: []\n---\n"
         )
-        (content / "luc-dupont.md").write_text(
+        (content / "luc-dupont").mkdir(exist_ok=True)
+
+        (content / "luc-dupont" / "luc-dupont.md").write_text(
             "---\nname: Luc Dupont\nslug: luc-dupont\nname_family: Dupont\n"
             "relation: famille\ngenre: homme\npere:\nmere:\nconjoint:\n"
             "freres_soeurs: []\nenfants: []\n---\n"
@@ -273,8 +293,8 @@ class TestFamilleCommand:
         # 1c = Luc is child of Jean
         result = runner.invoke(cli, ["famille"], input="1c\n\n")
         assert result.exit_code == 0
-        jean = (content / "jean-dupont.md").read_text()
-        luc = (content / "luc-dupont.md").read_text()
+        jean = (content / "jean-dupont" / "jean-dupont.md").read_text()
+        luc = (content / "luc-dupont" / "luc-dupont.md").read_text()
         assert "enfants" in jean and "luc-dupont" in jean
         assert "pere: jean-dupont" in luc
 
@@ -282,12 +302,16 @@ class TestFamilleCommand:
         """Search mode with ?query works."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "jean-dupont.md").write_text(
+        (content / "jean-dupont").mkdir(exist_ok=True)
+
+        (content / "jean-dupont" / "jean-dupont.md").write_text(
             "---\nname: Jean Dupont\nslug: jean-dupont\nname_family: Dupont\n"
             "relation: famille\npere:\nmere:\nconjoint:\n"
             "freres_soeurs: []\nenfants: []\n---\n"
         )
-        (content / "marie-martin.md").write_text(
+        (content / "marie-martin").mkdir(exist_ok=True)
+
+        (content / "marie-martin" / "marie-martin.md").write_text(
             "---\nname: Marie Martin\nslug: marie-martin\nname_family: Martin\n"
             "genre: femme\npere:\nmere:\nconjoint:\n"
             "freres_soeurs: []\nenfants: []\n---\n"
@@ -313,7 +337,9 @@ class TestExportCommand:
         """Exports an active contact."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text(
             "---\nname: Test User\nslug: test\nemail: test@test.com\n"
             "status: actif\nname_given: Test\nname_family: User\n---\n"
         )
@@ -329,7 +355,9 @@ class TestCheckCommand:
         """Reports no duplicates."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text(
             "---\nuid: uid-1\nname: Test\nslug: test\n---\n"
         )
         result = runner.invoke(cli, ["check"])
@@ -368,20 +396,24 @@ class TestDeleteCommand:
         """Marks a contact for deletion with confirmation."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text("---\nname: Test\nslug: test\ndelete:\n---\n")
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text("---\nname: Test\nslug: test\ndelete:\n---\n")
         result = runner.invoke(cli, ["delete"], input="d\ny\n")
         assert result.exit_code == 0
-        text = (content / "test.md").read_text()
+        text = (content / "test" / "test.md").read_text()
         assert "delete: true" in text
 
     def test_skip_marks_false(self, runner: CliRunner, jeff_env: Path) -> None:
         """Skipping marks delete: false."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text("---\nname: Test\nslug: test\ndelete:\n---\n")
+        (content / "test").mkdir(exist_ok=True)
+
+        (content / "test" / "test.md").write_text("---\nname: Test\nslug: test\ndelete:\n---\n")
         result = runner.invoke(cli, ["delete"], input="\n")
         assert result.exit_code == 0
-        text = (content / "test.md").read_text()
+        text = (content / "test" / "test.md").read_text()
         assert "delete: false" in text
 
 

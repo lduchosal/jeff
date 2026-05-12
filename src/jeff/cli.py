@@ -106,6 +106,62 @@ def init() -> None:
 
 
 @cli.command()
+@click.pass_context
+def migrate(ctx: click.Context) -> None:
+    """Migrate flat contacts to folder-per-contact layout."""
+    from jeff.services.migrate import migrate_to_folders
+
+    content_dir = _content_dir(ctx)
+    if not content_dir.is_dir():
+        click.echo(_NO_CONTACTS, err=True)
+        sys.exit(1)
+
+    migrated, already = migrate_to_folders(content_dir)
+    click.echo(f"Migrated {migrated} contact(s), {already} already in folders.")
+
+
+@cli.command()
+@click.argument("query")
+@click.option("--date", "date_str", default=None, help="Date (YYYY-MM-DD, default today).")
+@click.pass_context
+def note(ctx: click.Context, query: str, date_str: str | None) -> None:
+    """Add an interaction note to a contact."""
+    from datetime import date
+
+    from jeff.services.note import (
+        INTERACTION_TYPES,
+        create_interaction,
+        find_contact_dir,
+    )
+
+    content_dir = _content_dir(ctx)
+    contact_dir = find_contact_dir(content_dir, query)
+    if not contact_dir:
+        click.echo(f"No contact matching '{query}'.", err=True)
+        sys.exit(1)
+
+    from jeff.services.triage import load_contact
+
+    md = contact_dir / f"{contact_dir.name}.md"
+    data = load_contact(md) if md.exists() else None
+    name = data.get("name", contact_dir.name) if data else contact_dir.name
+    click.echo(f"\n  {name}")
+
+    types_help = "  ".join(f"{k}={v}" for k, v in INTERACTION_TYPES.items())
+    itype_code = click.prompt(f"  type ({types_help})", default="n").strip().lower()
+    itype = INTERACTION_TYPES.get(itype_code, itype_code)
+
+    note_text = click.prompt("  note").strip()
+    if not note_text:
+        click.echo("  Cancelled.")
+        return
+
+    target_date = date.fromisoformat(date_str) if date_str else None
+    path = create_interaction(contact_dir, itype, note_text, target_date)
+    click.echo(f"  ✓ {path.name}")
+
+
+@cli.command()
 @click.option("--full", is_flag=True, help="Force full sync (ignore cached state).")
 @click.option("--writeback-gender", is_flag=True, help="Push gender to CardDAV (slow).")
 @click.option(
@@ -328,6 +384,7 @@ def triage(ctx: click.Context, show_all: bool) -> None:
     """Interactive triage of contacts."""
     from jeff.services.triage import (
         format_summary,
+        iter_contact_files,
         load_contact,
         needs_triage,
         save_triage,
@@ -338,7 +395,7 @@ def triage(ctx: click.Context, show_all: bool) -> None:
         click.echo(_NO_CONTACTS, err=True)
         sys.exit(1)
 
-    files = sorted(content_dir.glob("*.md"))
+    files = iter_contact_files(content_dir)
     contacts = [
         d
         for f in files
@@ -437,7 +494,12 @@ def genre(ctx: click.Context) -> None:
 @click.pass_context
 def delete_cmd(ctx: click.Context) -> None:
     """Mark contacts for deletion, then confirm."""
-    from jeff.services.triage import format_summary, load_contact, save_triage
+    from jeff.services.triage import (
+        format_summary,
+        iter_contact_files,
+        load_contact,
+        save_triage,
+    )
 
     content_dir = _content_dir(ctx)
     if not content_dir.is_dir():
@@ -446,7 +508,7 @@ def delete_cmd(ctx: click.Context) -> None:
 
     # Load contacts with delete field empty (not yet decided).
     contacts = []
-    for md in sorted(content_dir.glob("*.md")):
+    for md in iter_contact_files(content_dir):
         data = load_contact(md)
         if data and data.get("name") and not data.get("delete"):
             contacts.append(data)

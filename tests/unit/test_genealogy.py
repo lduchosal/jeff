@@ -14,7 +14,9 @@ def _make_contact(tmp_path: Path, slug: str, **fields: str) -> None:
         if k != "name":
             lines.append(f"{k}: {v}")
     lines.append("---")
-    (tmp_path / f"{slug}.md").write_text("\n".join(lines), encoding="utf-8")
+    slug_dir = tmp_path / slug
+    slug_dir.mkdir(exist_ok=True)
+    (slug_dir / f"{slug}.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 class TestBuildFamilyTrees:

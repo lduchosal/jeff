@@ -9,7 +9,7 @@ from typing import Any
 import graphviz
 
 from jeff.services.famille import _parse_slug_list
-from jeff.services.triage import load_contact
+from jeff.services.triage import iter_contact_files, load_contact
 
 
 @dataclass
@@ -28,7 +28,7 @@ class TreeNode:
 def build_family_trees(content_dir: Path) -> list[TreeNode]:
     """Build all family trees from contact .md files."""
     by_slug: dict[str, dict[str, Any]] = {}
-    for md in sorted(content_dir.glob("*.md")):
+    for md in iter_contact_files(content_dir):
         data = load_contact(md)
         if data and data.get("name") and data.get("relation") == "famille":
             by_slug[data.get("slug", "")] = data

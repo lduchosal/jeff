@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from jeff.services.triage import load_contact
+from jeff.services.triage import iter_contact_files, load_contact
 
 
 @dataclass
@@ -24,7 +24,7 @@ def find_duplicates(content_dir: Path) -> list[Duplicate]:
     by_uid: dict[str, list[dict[str, Any]]] = {}
     if not content_dir.is_dir():
         return []
-    for md in sorted(content_dir.glob("*.md")):
+    for md in iter_contact_files(content_dir):
         data = load_contact(md)
         if not data or not data.get("uid"):
             continue

@@ -15,7 +15,9 @@ def _make_contact(
     status: str = "actif",
 ) -> None:
     """Write a contact .md file."""
-    (tmp_path / f"{slug}.md").write_text(
+    slug_dir = tmp_path / slug
+    slug_dir.mkdir(exist_ok=True)
+    (slug_dir / f"{slug}.md").write_text(
         f"---\nname: {name}\nslug: {slug}\nemail: {email}\n"
         f"name_given: {name.split()[0]}\nname_family: {name.split()[-1]}\n"
         f"status: {status}\nnote: A note\n---\n",
@@ -54,7 +56,8 @@ class TestExportSquirrelmail:
     def test_pipe_in_note(self, tmp_path: Path) -> None:
         """Pipes in notes are replaced."""
         out = tmp_path / "out.abook"
-        (tmp_path / "test.md").write_text(
+        (tmp_path / "test").mkdir(exist_ok=True)
+        (tmp_path / "test" / "test.md").write_text(
             "---\nname: Test\nslug: test\nemail: t@t.com\n"
             'status: actif\nnote: "a|b"\n---\n',
             encoding="utf-8",

@@ -14,7 +14,9 @@ from jeff.services.birthday import (
 
 def _make_contact(tmp_path: Path, slug: str, birthday: str) -> None:
     """Write a minimal contact .md with a birthday."""
-    (tmp_path / f"{slug}.md").write_text(
+    slug_dir = tmp_path / slug
+    slug_dir.mkdir(exist_ok=True)
+    (slug_dir / f"{slug}.md").write_text(
         f"---\nname: {slug}\nslug: {slug}\nbirthday: {birthday}\n---\n",
         encoding="utf-8",
     )
@@ -59,11 +61,11 @@ class TestRecordBirthdayExchange:
         _make_contact(tmp_path, "jean", "1985-03-15")
         from jeff.services.triage import load_contact
 
-        data = load_contact(tmp_path / "jean.md")
+        data = load_contact(tmp_path / "jean" / "jean.md")
         assert data is not None
         result = record_birthday_exchange(data, target_date=date(2026, 3, 15))
         assert result is True
-        text = (tmp_path / "jean.md").read_text()
+        text = (tmp_path / "jean" / "jean.md").read_text()
         assert "2026-03-15" in text
 
     def test_idempotent(self, tmp_path: Path) -> None:
@@ -71,7 +73,7 @@ class TestRecordBirthdayExchange:
         _make_contact(tmp_path, "jean", "1985-03-15")
         from jeff.services.triage import load_contact
 
-        data = load_contact(tmp_path / "jean.md")
+        data = load_contact(tmp_path / "jean" / "jean.md")
         assert data is not None
         record_birthday_exchange(data, target_date=date(2026, 3, 15))
         result = record_birthday_exchange(data, target_date=date(2026, 3, 15))

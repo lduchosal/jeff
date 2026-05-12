@@ -9,10 +9,13 @@ from jeff.services.duplicates import find_duplicates, remove_duplicate
 
 
 def _make_contact(tmp_path: Path, filename: str, uid: str, name: str) -> Path:
-    """Write a minimal contact .md file."""
-    md = tmp_path / filename
+    """Write a minimal contact .md file in folder layout."""
+    slug = filename.replace(".md", "")
+    slug_dir = tmp_path / slug
+    slug_dir.mkdir(exist_ok=True)
+    md = slug_dir / filename
     md.write_text(
-        f"---\nuid: {uid}\nname: {name}\nslug: {filename.replace('.md', '')}\n---\n",
+        f"---\nuid: {uid}\nname: {name}\nslug: {slug}\n---\n",
         encoding="utf-8",
     )
     return md

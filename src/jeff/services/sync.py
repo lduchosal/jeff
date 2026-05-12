@@ -17,7 +17,7 @@ from jeff.domain.urlback import (
     inject_gender,
     inject_related,
 )
-from jeff.services.triage import load_contact
+from jeff.services.triage import iter_contact_files, load_contact
 
 # Progress callback type: (message: str) -> None
 ProgressFn = Callable[[str], None]
@@ -96,10 +96,14 @@ def run_sync(
         old_info = state.contacts.get(href, {})
         slug = old_info.get("slug")
         if slug:
-            md_path = content_dir / f"{slug}.md"
+            slug_dir = content_dir / slug
+            md_path = slug_dir / f"{slug}.md"
             if md_path.exists():
                 md_path.unlink()
-                removed.append(md_path.name)
+                # Remove the directory if empty.
+                if slug_dir.is_dir() and not list(slug_dir.iterdir()):
+                    slug_dir.rmdir()
+                removed.append(f"{slug}.md")
 
     # Enrich state with slugs.
     for contact in updated:
@@ -132,7 +136,7 @@ def run_sync(
         s = info.get("slug", "")
         if s:
             slug_to_href[s] = href
-    for md_path in sorted(content_dir.glob("*.md")):
+    for md_path in iter_contact_files(content_dir):
         md_data = load_contact(md_path)
         if not md_data or str(md_data.get("delete", "")).lower() != "true":
             continue
@@ -214,7 +218,7 @@ def _writeback_gender(
         if s:
             slug_to_href[s] = href
 
-    md_files = sorted(content_dir.glob("*.md"))
+    md_files = iter_contact_files(content_dir)
     for i, md_path in enumerate(md_files, 1):
         md_data = load_contact(md_path)
         if not md_data or not md_data.get("genre"):
@@ -264,14 +268,14 @@ def _writeback_famille(
     # First pass: collect UIDs from all contacts.
     from jeff.services.famille import _parse_slug_list
 
-    for md_path in sorted(content_dir.glob("*.md")):
+    for md_path in iter_contact_files(content_dir):
         md_data = load_contact(md_path)
         if md_data and md_data.get("uid") and md_data.get("slug"):
             uid = str(md_data["uid"]).removeprefix("urn:uuid:")
             slug_to_uid[md_data["slug"]] = uid
 
     count = 0
-    md_files = sorted(content_dir.glob("*.md"))
+    md_files = iter_contact_files(content_dir)
     for i, md_path in enumerate(md_files, 1):
         md_data = load_contact(md_path)
         if not md_data or md_data.get("relation") != "famille":
