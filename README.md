@@ -28,73 +28,33 @@
 
 **jeff** syncs contacts from a Baikal CardDAV server into clean Markdown files with YAML frontmatter, then publishes a static HTML site. No database, no SaaS, no vendor lock-in — just files, Git, and a fast static site.
 
-## How it works
-
-```
-Baikal (CardDAV)  ──sync──>  Markdown + YAML  ──publish──>  Static HTML
-```
-
-1. **Sync** contacts from your CardDAV server (incremental, ctag/etag-based)
-2. **Transform** vCards into Markdown files with structured YAML frontmatter
-3. **Triage** contacts interactively (actif/archivé, relation, priority, gender)
-4. **Publish** a dashboard with contact cards, family tree, and birthday reminders
-
 ## Quick start
 
 ```sh
 pip install jeff-contacts
-jeff init
-```
-
-This creates a `.jeff` config file. Edit it with your CardDAV credentials:
-
-```
-carddav_url=https://your-baikal.example.com/dav.php/addressbooks/user/default/
-carddav_username=user
-carddav_password=secret
-```
-
-Then sync and publish:
-
-```sh
-jeff sync
-jeff publish
+jeff init                # creates .jeff config file
+# Edit .jeff with your CardDAV credentials
+jeff sync                # fetch contacts
+jeff publish             # build HTML site
 open public/index.html
 ```
 
-## Commands
+## Workflow
 
-```
-jeff --help
+Le workflow jeff se fait en 5 étapes. Les 4 premières sont à faire une fois lors de la mise en place, la dernière tourne quotidiennement.
 
-Workflow quotidien:
-  jeff cron              Sync + anniversaires + publish (pour crontab)
+### 1. `jeff sync` — Récupérer les contacts
 
-Sync & publication:
-  jeff sync              Sync contacts depuis CardDAV
-  jeff sync --full       Force un re-sync complet
-  jeff publish           Génère le site HTML statique
-
-Gestion des contacts:
-  jeff triage            Trier les contacts (actif/archivé/relation/priorité)
-  jeff genre             Assigner le genre (H=homme, F=femme, N=none)
-  jeff delete            Marquer des contacts pour suppression
-  jeff check             Détecter et nettoyer les doublons (même UID)
-
-Famille:
-  jeff famille           Éditer les liens familiaux (père, mère, conjoint, enfants)
-  jeff famille dupont    Éditer un contact spécifique
-  jeff famille --check   Vérifier la cohérence bidirectionnelle des liens
-
-Export & notifications:
-  jeff export            Exporter au format SquirrelMail (.abook)
-  jeff birthday-mail     Envoyer un rappel anniversaire par email
-
-Configuration:
-  jeff init              Créer le fichier .jeff
+```sh
+jeff sync           # sync incrémental (seuls les changements)
+jeff sync --full    # force un re-sync complet
 ```
 
-## Triage
+Connecte le serveur CardDAV (Baikal), détecte les contacts modifiés via ctag/etag, télécharge les vCards et les transforme en fichiers Markdown avec frontmatter YAML. Chaque contact devient un fichier `.md` dans `content/contacts/`.
+
+Le sync est incrémental : seuls les contacts ajoutés, modifiés ou supprimés depuis le dernier sync sont traités. Un `--full` force la régénération de tous les fichiers.
+
+### 2. `jeff triage` — Trier les contacts
 
 ```sh
 jeff triage
@@ -113,12 +73,41 @@ jeff triage
   ✓ Jean Dupont → actif
 ```
 
-Format: `a <relation> <priority> <genre>` — `r` pour archiver, `s` pour skip, `q` pour quitter.
+Passe en revue chaque contact non trié et permet de décider rapidement :
+- **a** = actif (garder dans le CRM) avec relation, priorité et genre
+- **r** = archivé (masqué du dashboard mais conservé)
+- **s** = skip (on décide plus tard)
+- **q** = quitter (reprend où on s'est arrêté la prochaine fois)
 
-## Family links
+Relations : `a`=ami, `c`=collègue, `f`=famille, `k`=connaissance.
+Priorités : `h`=haute, `m`=moyenne, `b`=basse.
+Genre : `H`=homme, `F`=femme.
+
+### 3. `jeff genre` — Assigner le genre
 
 ```sh
-jeff famille
+jeff genre
+```
+
+```
+  [1/204] Jean Dupont: h
+  [2/204] Marie Martin: f
+  [3/204] Acme Corp: n
+```
+
+Passe rapidement sur tous les contacts sans genre. Utile pour :
+- Les liens familiaux (distinguer père/mère automatiquement)
+- L'affichage dans le dashboard (♂️/♀️)
+- Le writeback vers CardDAV (X-GENDER)
+
+Codes : `H`=homme, `F`=femme, `N`=none (entreprise), Enter=skip, `q`=quit.
+
+### 4. `jeff famille` — Liens familiaux
+
+```sh
+jeff famille              # tous les contacts famille
+jeff famille dupont       # filtrer par nom
+jeff famille --check      # vérifier la cohérence
 ```
 
 ```
@@ -130,6 +119,7 @@ jeff famille
     3. Luc Dupont (homme)
 
     f=père m=mère w=conjoint c=enfant b=frère/sœur
+    ?texte=chercher  Enter=skip  q=quit
 
   > 1w 2c 3c
   ✓ Jacques Dupont: conjoint=anne-dupont enfants=[jean-dupont, luc-dupont]
@@ -138,47 +128,51 @@ jeff famille
   ↔ Luc Dupont: pere=jacques-dupont
 ```
 
-Links are written **reciprocally** — setting a parent also sets the child, and vice versa.
+Pour chaque contact famille, affiche les membres du même nom de famille numérotés. On tape les numéros avec le code de relation. Les liens sont écrits **réciproquement** — assigner un père ajoute automatiquement l'enfant chez le père, et le genre détermine si c'est père ou mère.
 
-## Dashboard
+`jeff famille --check` vérifie que tous les liens sont bidirectionnels et propose de corriger les incohérences.
 
-`jeff publish` generates a static HTML dashboard with:
-
-- Contacts grouped by relation (famille, ami, collegue, connaissance)
-- Priority badges and gender indicators
-- Birthday section with WhatsApp message button
-- Genealogy tree (Graphviz SVG)
-- Contact detail pages with all info, family links, and zodiac sign
-
-## Daily cron
+### 5. `jeff cron` — Automatisation quotidienne
 
 ```sh
 jeff cron
 ```
 
-Runs sync + birthday detection + publish in one command. Add to crontab:
+```
+── Sync ──
+Discovering addressbooks...
+Addressbook: Contacts
+Already up to date.
+
+── Birthdays ──
+  🎂 Jean Dupont (recorded)
+
+── Publish ──
+Published 204 contact(s) to public/
+```
+
+Enchaîne automatiquement : **sync** → **détection des anniversaires** → **publication du site HTML**. Conçu pour tourner dans un crontab :
 
 ```
 0 7 * * * cd /path/to/project && jeff cron
 ```
 
-Optional birthday email reminders:
+Le site publié inclut :
+- Dashboard avec contacts groupés par relation et triés par priorité
+- Section anniversaires du jour avec bouton WhatsApp pré-rempli
+- Arbre généalogique (Graphviz SVG)
+- Fiches contact avec coordonnées, liens familiaux et signe astrologique
 
-```
-0 23 * * * cd /path && jeff birthday-mail --tomorrow
-0  6 * * * cd /path && jeff birthday-mail
-```
+## Autres commandes
 
-Requires `mail_to=you@example.com` in `.jeff` and `sendmail`/`msmtp` configured.
-
-## Writeback to CardDAV
-
-jeff can write data back to your CardDAV server:
-
-```sh
-jeff sync --writeback-gender    # Push gender (X-GENDER) to CardDAV
-jeff sync --writeback-famille   # Push family links (RELATED) to CardDAV
-```
+| Commande | Description |
+|----------|-------------|
+| `jeff delete` | Marquer des contacts archivés pour suppression du CardDAV |
+| `jeff check` | Détecter et nettoyer les doublons (même UID) |
+| `jeff export` | Exporter au format SquirrelMail (.abook) |
+| `jeff birthday-mail` | Envoyer un rappel anniversaire par email |
+| `jeff sync --writeback-gender` | Pousser le genre vers CardDAV (X-GENDER) |
+| `jeff sync --writeback-famille` | Pousser les liens familiaux vers CardDAV (RELATED) |
 
 ## Architecture
 
