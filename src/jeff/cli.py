@@ -23,23 +23,38 @@ from jeff.domain.config import load_config
 _NO_CONTACTS = "No contacts found."
 
 
-@click.group()
+_EPILOG = "Run 'jeff COMMAND --help' for details. Start with 'jeff init'."
+
+# Commands that don't need a valid config.
+_NO_CONFIG_COMMANDS = {"init"}
+
+
+@click.group(
+    help="Jeff — CRM Markdown synchronisé depuis CardDAV.",
+    epilog=_EPILOG,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 @click.option("--config", "config_file", help="Path to a .jeff config file.")
 @click.option("--verbose", "-v", is_flag=True, help="Enable debug logging.")
 @click.version_option(__version__, prog_name="jeff")
 @click.pass_context
 def cli(ctx: click.Context, config_file: str | None, verbose: bool) -> None:
-    """Jeff — sync CardDAV contacts to Markdown."""
+    """Jeff — CRM Markdown synchronisé depuis CardDAV."""
     from jeff.log import setup
 
     setup(verbose=verbose)
     ctx.ensure_object(dict)
+
+    # Skip config validation for commands that don't need it.
+    if ctx.invoked_subcommand in _NO_CONFIG_COMMANDS:
+        return
+
     cfg = load_config(config_file)
     errors = cfg.validate()
     if errors:
         click.echo(
             f"Error: missing config fields: {', '.join(errors)}. "
-            f"Create a .jeff file or set JEFF_* env vars.",
+            f"Run 'jeff init' or set JEFF_* env vars.",
             err=True,
         )
         sys.exit(1)
@@ -52,6 +67,42 @@ def _content_dir(ctx: click.Context) -> Path:
     base: Path = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
     result: Path = base / cfg.content_dir
     return result
+
+
+_JEFF_TEMPLATE = """\
+# Jeff configuration — edit the values below.
+# Documentation: https://github.com/lduchosal/jeff
+
+# CardDAV server (Baikal)
+carddav_url=https://your-baikal.example.com/dav.php/addressbooks/user/default/
+carddav_username=your_username
+carddav_password=your_password
+
+# Optional: base URL of the published site (for CRM URL writeback)
+# publish_url=https://crm.example.com
+
+# Optional: email for birthday reminders
+# mail_to=you@example.com
+# mail_from=jeff@example.com
+"""
+
+
+@cli.command()
+def init() -> None:
+    """Create a .jeff config file in the current directory."""
+    jeff_path = Path.cwd() / ".jeff"
+    if jeff_path.exists():
+        click.echo(f".jeff already exists at {jeff_path}")
+        return
+    jeff_path.write_text(_JEFF_TEMPLATE, encoding="utf-8")
+    jeff_path.chmod(0o600)
+    click.echo(f"Created {jeff_path} (mode 600)")
+    click.echo()
+    click.echo("Next steps:")
+    click.echo("  1. Edit .jeff with your CardDAV credentials")
+    click.echo("  2. Run: jeff sync")
+    click.echo("  3. Run: jeff publish")
+    click.echo("  4. Open public/index.html")
 
 
 @cli.command()
