@@ -56,9 +56,9 @@ done
 
 # Set total steps based on mode
 if [ "$QUALITY_ONLY" = true ]; then
-    STEPS=15
+    STEPS=16
 else
-    STEPS=22
+    STEPS=23
 fi
 STEP=0
 
@@ -116,6 +116,9 @@ if [ "$QUALITY_ONLY" = true ]; then
 else
     echo "${BOLD}Starting Jeff Publishing Process...${NC}"
 fi
+
+print_step "Syncing bundled assets"
+run_command "cp doc/ui/contact.css src/jeff/static/contact.css" "CSS bundle sync"
 
 print_step "Cleaning Previous Build (pdm run clean)"
 run_command "pdm run clean" "Clean"
