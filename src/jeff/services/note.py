@@ -35,6 +35,29 @@ def find_contact_dir(content_dir: Path, query: str) -> Path | None:
     return None
 
 
+def _load_interaction(path: Path) -> dict[str, Any]:
+    """Load an interaction .md file (frontmatter + body content)."""
+    text = path.read_text(encoding="utf-8")
+    lines = text.split("\n")
+    if lines and lines[0].strip() == "---":
+        # Has frontmatter — parse it and extract body.
+        for i, line in enumerate(lines[1:], start=1):
+            if line.strip() == "---":
+                import yaml
+
+                try:
+                    data = yaml.safe_load("\n".join(lines[1:i])) or {}
+                except yaml.YAMLError:
+                    data = {}
+                body = "\n".join(lines[i + 1 :]).strip()
+                if body:
+                    data["note"] = body
+                data["_path"] = path
+                return data
+    # No frontmatter — treat entire file as note.
+    return {"date": path.stem, "note": text.strip(), "_path": path}
+
+
 def list_interactions(contact_dir: Path) -> list[dict[str, Any]]:
     """List all interaction files in a contact directory, newest first."""
     interactions: list[dict[str, Any]] = []
@@ -42,19 +65,7 @@ def list_interactions(contact_dir: Path) -> list[dict[str, Any]]:
     for md in sorted(contact_dir.glob("*.md"), reverse=True):
         if md.name == f"{slug}.md":
             continue  # Skip the contact file itself.
-        data = load_contact(md)
-        if data:
-            interactions.append(data)
-        else:
-            # Simple .md without frontmatter — read as plain text.
-            text = md.read_text(encoding="utf-8").strip()
-            interactions.append(
-                {
-                    "date": md.stem,
-                    "note": text,
-                    "_path": md,
-                }
-            )
+        interactions.append(_load_interaction(md))
     return interactions
 
 
