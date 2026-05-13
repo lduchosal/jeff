@@ -463,6 +463,40 @@ class TestNoteCommand:
         result = runner.invoke(cli, ["note", "test"], input="w\nHello world\n")
         assert result.exit_code == 0
 
+    def test_note_non_interactive(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Creates an interaction in non-interactive (agent) mode."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        (content / "test").mkdir()
+        (content / "test" / "test.md").write_text(
+            "---\nname: Test User\nslug: test\n---\n"
+        )
+        result = runner.invoke(
+            cli, ["note", "test", "-t", "w", "-m", "Planification rando"]
+        )
+        assert result.exit_code == 0
+        assert "Test User" in result.output
+        # Check file was created.
+        interactions = list((content / "test").glob("2*.md"))
+        assert len(interactions) == 1
+        text = interactions[0].read_text()
+        assert "type: whatsapp" in text
+        assert "Planification rando" in text
+
+    def test_note_non_interactive_with_date(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Creates an interaction with a specific date."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        (content / "test").mkdir()
+        (content / "test" / "test.md").write_text(
+            "---\nname: Test User\nslug: test\n---\n"
+        )
+        result = runner.invoke(
+            cli, ["note", "test", "-t", "tel", "-m", "Appel rapide", "--date", "2025-05-06"]
+        )
+        assert result.exit_code == 0
+        assert (content / "test" / "2025-05-06.md").exists()
+
 
 class TestBirthdayMailCommand:
     """Tests for the birthday-mail command."""

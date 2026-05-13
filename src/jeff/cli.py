@@ -130,18 +130,20 @@ def migrate(ctx: click.Context) -> None:
 
 @cli.command()
 @click.argument("query")
-@click.option(
-    "--date", "date_str", default=None, help="Date (YYYY-MM-DD, default today)."
-)
+@click.option("-t", "--type", "type_code", default=None, help="Type: w=whatsapp t=tel m=mail v=visite n=note.")
+@click.option("-m", "--message", default=None, help="Note content (non-interactive mode).")
+@click.option("--date", "date_str", default=None, help="Date (YYYY-MM-DD, default today).")
 @click.pass_context
-def note(ctx: click.Context, query: str, date_str: str | None) -> None:
+def note(ctx: click.Context, query: str, type_code: str | None, message: str | None, date_str: str | None) -> None:
     r"""Add an interaction note to a contact.
 
     \b
-    Examples:
-      jeff note antoine              # note for today
-      jeff note martin               # partial name match
-      jeff note antoine --date 2025-05-06  # past date
+    Non-interactive (agent mode):
+      jeff note antoine -t w -m "Planification rando juin"
+      jeff note martin -t tel -m "Pris des nouvelles" --date 2025-05-06
+
+    Interactive (human mode):
+      jeff note antoine
     """
     from datetime import date
 
@@ -162,20 +164,26 @@ def note(ctx: click.Context, query: str, date_str: str | None) -> None:
     md = contact_dir / f"{contact_dir.name}.md"
     data = load_contact(md) if md.exists() else None
     name = data.get("name", contact_dir.name) if data else contact_dir.name
-    click.echo(f"\n  {name}")
 
-    types_help = "  ".join(f"{k}={v}" for k, v in INTERACTION_TYPES.items())
-    itype_code = click.prompt(f"  type ({types_help})", default="n").strip().lower()
-    itype = INTERACTION_TYPES.get(itype_code, itype_code)
-
-    note_text = click.prompt("  note").strip()
-    if not note_text:
-        click.echo("  Cancelled.")
-        return
-
-    target_date = date.fromisoformat(date_str) if date_str else None
-    path = create_interaction(contact_dir, itype, note_text, target_date)
-    click.echo(f"  ✓ {path.name}")
+    if message:
+        # Non-interactive mode (agent).
+        itype = INTERACTION_TYPES.get(type_code or "n", type_code or "note")
+        target_date = date.fromisoformat(date_str) if date_str else None
+        path = create_interaction(contact_dir, itype, message, target_date)
+        click.echo(f"{name}: {path.name}")
+    else:
+        # Interactive mode (human).
+        click.echo(f"\n  {name}")
+        types_help = "  ".join(f"{k}={v}" for k, v in INTERACTION_TYPES.items())
+        itype_code = click.prompt(f"  type ({types_help})", default="n").strip().lower()
+        itype = INTERACTION_TYPES.get(itype_code, itype_code)
+        note_text = click.prompt("  note").strip()
+        if not note_text:
+            click.echo("  Cancelled.")
+            return
+        target_date = date.fromisoformat(date_str) if date_str else None
+        path = create_interaction(contact_dir, itype, note_text, target_date)
+        click.echo(f"  ✓ {path.name}")
 
 
 @cli.command()
