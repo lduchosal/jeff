@@ -89,7 +89,10 @@ carddav_password=your_password
 
 @cli.command()
 def init() -> None:
-    """Create a .jeff config file in the current directory."""
+    """Create a .jeff config file in the current directory.
+
+    Example: jeff init
+    """
     jeff_path = Path.cwd() / ".jeff"
     if jeff_path.exists():
         click.echo(f".jeff already exists at {jeff_path}")
@@ -108,7 +111,12 @@ def init() -> None:
 @cli.command()
 @click.pass_context
 def migrate(ctx: click.Context) -> None:
-    """Migrate flat contacts to folder-per-contact layout."""
+    """Migrate flat contacts to folder-per-contact layout.
+
+    Moves content/contacts/*.md into content/contacts/<slug>/<slug>.md.
+
+    Example: jeff migrate
+    """
     from jeff.services.migrate import migrate_to_folders
 
     content_dir = _content_dir(ctx)
@@ -127,7 +135,14 @@ def migrate(ctx: click.Context) -> None:
 )
 @click.pass_context
 def note(ctx: click.Context, query: str, date_str: str | None) -> None:
-    """Add an interaction note to a contact."""
+    """Add an interaction note to a contact.
+
+    \b
+    Examples:
+      jeff note antoine              # note for today
+      jeff note martin               # partial name match
+      jeff note antoine --date 2025-05-06  # past date
+    """
     from datetime import date
 
     from jeff.services.note import (
@@ -173,7 +188,15 @@ def note(ctx: click.Context, query: str, date_str: str | None) -> None:
 def sync(
     ctx: click.Context, full: bool, writeback_gender: bool, writeback_famille: bool
 ) -> None:
-    """Sync contacts from CardDAV to Markdown files."""
+    """Sync contacts from CardDAV to Markdown files.
+
+    \b
+    Examples:
+      jeff sync                      # incremental sync
+      jeff sync --full               # re-sync all contacts
+      jeff sync --writeback-gender   # push gender to CardDAV
+      jeff sync --writeback-famille  # push family links to CardDAV
+    """
     from jeff.services.sync import run_sync
 
     result = run_sync(
@@ -214,7 +237,13 @@ def sync(
 )
 @click.pass_context
 def publish(ctx: click.Context, output: str) -> None:
-    """Build a static HTML site from synced Markdown contacts."""
+    """Build a static HTML site from synced Markdown contacts.
+
+    \b
+    Examples:
+      jeff publish                   # build to public/
+      jeff publish -o /var/www/crm   # custom output dir
+    """
     from jeff.services.publish import build_site
 
     cfg = ctx.obj["cfg"]
@@ -243,7 +272,13 @@ def publish(ctx: click.Context, output: str) -> None:
 )
 @click.pass_context
 def export_cmd(ctx: click.Context, fmt: str, output: str) -> None:
-    """Export active contacts to an address book format."""
+    """Export active contacts to an address book format.
+
+    \b
+    Examples:
+      jeff export                        # → contacts.abook
+      jeff export -o /path/to/file.abook # custom path
+    """
     from jeff.services.export import export_squirrelmail
 
     content_dir = _content_dir(ctx)
@@ -263,7 +298,13 @@ def export_cmd(ctx: click.Context, fmt: str, output: str) -> None:
 @click.option("--tomorrow", is_flag=True, help="Send for tomorrow instead of today.")
 @click.pass_context
 def birthday_mail(ctx: click.Context, tomorrow: bool) -> None:
-    """Send birthday reminder email via sendmail."""
+    """Send birthday reminder email via sendmail.
+
+    \b
+    Examples:
+      jeff birthday-mail             # today's birthdays
+      jeff birthday-mail --tomorrow  # tomorrow's birthdays
+    """
     from jeff.services.birthday_mail import send_birthday_mail
 
     cfg = ctx.obj["cfg"]
@@ -287,7 +328,11 @@ def birthday_mail(ctx: click.Context, tomorrow: bool) -> None:
 @cli.command()
 @click.pass_context
 def check(ctx: click.Context) -> None:
-    """Check for duplicate contacts (same UID) and propose cleanup."""
+    """Check for duplicate contacts (same UID) and propose cleanup.
+
+    \b
+    Example: jeff check
+    """
     from jeff.services.duplicates import find_duplicates, remove_duplicate
 
     content_dir = _content_dir(ctx)
@@ -329,7 +374,13 @@ def check(ctx: click.Context) -> None:
 )
 @click.pass_context
 def cron(ctx: click.Context, full: bool, output: str) -> None:
-    """Daily cron job: sync + birthdays + publish."""
+    """Daily cron job: sync + birthdays + publish.
+
+    \b
+    Examples:
+      jeff cron                # incremental sync + publish
+      jeff cron --full         # full re-sync + publish
+    """
     from jeff.services.birthday import find_birthdays, record_birthday_exchange
     from jeff.services.publish import build_site
     from jeff.services.sync import run_sync
@@ -383,7 +434,19 @@ def cron(ctx: click.Context, full: bool, output: str) -> None:
 @click.option("--all", "show_all", is_flag=True, help="Include already triaged.")
 @click.pass_context
 def triage(ctx: click.Context, show_all: bool) -> None:
-    """Interactive triage of contacts."""
+    """Interactive triage of contacts.
+
+    \b
+    Examples:
+      jeff triage              # untriaged contacts only
+      jeff triage --all        # review all contacts
+    Codes: a=actif r=archivé s=skip q=quit
+    Format: a <relation> <priority> <genre>
+      relation: a=ami c=collegue f=famille k=connaissance
+      priority: h=haute m=moyenne b=basse
+      genre:    H=homme F=femme
+    Example: 'a f h H' = actif, famille, haute, homme
+    """
     from jeff.services.triage import (
         format_summary,
         iter_contact_files,
@@ -459,7 +522,12 @@ def triage(ctx: click.Context, show_all: bool) -> None:
 @cli.command()
 @click.pass_context
 def genre(ctx: click.Context) -> None:
-    """Assign gender (H/F) on contacts without one."""
+    """Assign gender (H/F/N) on contacts without one.
+
+    \b
+    Example: jeff genre
+    Codes: H=homme  F=femme  N=none (entreprise)  Enter=skip  q=quit
+    """
     from jeff.services.genre import apply_genre, load_contacts_without_genre
 
     content_dir = _content_dir(ctx)
@@ -495,7 +563,15 @@ def genre(ctx: click.Context) -> None:
 @cli.command(name="delete")
 @click.pass_context
 def delete_cmd(ctx: click.Context) -> None:
-    """Mark contacts for deletion, then confirm."""
+    """Mark contacts for deletion, then confirm.
+
+    Reviews contacts with delete field empty. Skipped contacts get
+    delete=false so they won't be asked again.
+
+    \b
+    Example: jeff delete
+    Codes: d=delete  Enter=skip  q=quit
+    """
     from jeff.services.triage import (
         format_summary,
         iter_contact_files,
@@ -569,7 +645,15 @@ def delete_cmd(ctx: click.Context) -> None:
 def famille(ctx: click.Context, check: bool, query: str | None) -> None:
     """Batch-edit family links, or --check consistency.
 
-    Optionally pass a name to filter: jeff famille edmond
+    \b
+    Examples:
+      jeff famille               # all famille contacts
+      jeff famille dupont        # filter by name
+      jeff famille --check       # verify bidirectional links
+      jeff famille --check dup   # check a specific family
+    Codes: f=pere m=mere w=conjoint c=enfant b=frere/soeur
+    Search: ?texte to find contacts by name
+    Example: '1f 2m 3w 4c' = pere, mere, conjoint, enfant
     """
     from jeff.services.famille import (
         apply_famille_updates,
