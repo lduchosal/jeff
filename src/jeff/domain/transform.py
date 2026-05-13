@@ -417,6 +417,7 @@ def contact_to_markdown(
     contact: Contact,
     content_dir: Path,
     photo_dir: Path,
+    archive_dir: Path | None = None,
 ) -> Path:
     """Transform a CardDAV contact into a Markdown file.
 
@@ -427,9 +428,16 @@ def contact_to_markdown(
     _log.debug("Transform %s → %s.md", data.get("name", "?"), slug)
 
     # Preserve hand-edited triage fields from existing frontmatter.
+    # Check both content_dir and archive_dir for existing file.
     contact_dir: Path = content_dir / slug
     contact_dir.mkdir(parents=True, exist_ok=True)
-    md_path: Path = contact_dir / f"{slug}.md"
+    write_path: Path = contact_dir / f"{slug}.md"
+    # Read from existing file (content or archive).
+    read_path = write_path
+    if not read_path.exists() and archive_dir:
+        archive_md = archive_dir / slug / f"{slug}.md"
+        if archive_md.exists():
+            read_path = archive_md
     _triage_keys = (
         "status",
         "relation",
@@ -443,10 +451,10 @@ def contact_to_markdown(
         "freres_soeurs",
         "enfants",
     )
-    if md_path.exists():
+    if read_path.exists():
         import yaml
 
-        existing = md_path.read_text(encoding="utf-8")
+        existing = read_path.read_text(encoding="utf-8")
         lines_ex = existing.split("\n")
         if lines_ex and lines_ex[0].strip() == "---":
             for idx, line in enumerate(lines_ex[1:], start=1):
@@ -456,7 +464,7 @@ def contact_to_markdown(
                     except yaml.YAMLError:
                         _log.warning(
                             "Corrupt frontmatter in %s, skipping preservation",
-                            md_path.name,
+                            read_path.name,
                         )
                         break
                     for k in _triage_keys:
@@ -472,5 +480,5 @@ def contact_to_markdown(
     data.pop("_photo_data", None)
 
     frontmatter = render_frontmatter(data)
-    md_path.write_text(f"{frontmatter}\n", encoding="utf-8")
-    return md_path
+    write_path.write_text(f"{frontmatter}\n", encoding="utf-8")
+    return write_path

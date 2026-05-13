@@ -69,6 +69,14 @@ def _content_dir(ctx: click.Context) -> Path:
     return result
 
 
+def _archive_dir(ctx: click.Context) -> Path:
+    """Resolve the archive directory from config."""
+    cfg = ctx.obj["cfg"]
+    base: Path = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
+    result: Path = base / cfg.archive_dir
+    return result
+
+
 _JEFF_TEMPLATE = """\
 # Jeff configuration — edit the values below.
 # Documentation: https://github.com/lduchosal/jeff
@@ -126,6 +134,33 @@ def migrate(ctx: click.Context) -> None:
 
     migrated, already = migrate_to_folders(content_dir)
     click.echo(f"Migrated {migrated} contact(s), {already} already in folders.")
+
+
+@cli.command()
+@click.pass_context
+def archive(ctx: click.Context) -> None:
+    r"""Move contacts between contacts/ and archive/ based on status.
+
+    \b
+    Examples:
+      jeff archive    # sort contacts by status
+    Archivé contacts move to archive/, others move back to contacts/.
+    """
+    from jeff.services.archive import run_archive
+
+    content_dir = _content_dir(ctx)
+    archive_dir_ = _archive_dir(ctx)
+    result = run_archive(content_dir, archive_dir_)
+    if result.archived:
+        click.echo(f"Archived {len(result.archived)} contact(s):")
+        for name in sorted(result.archived):
+            click.echo(f"  → {name}")
+    if result.restored:
+        click.echo(f"Restored {len(result.restored)} contact(s):")
+        for name in sorted(result.restored):
+            click.echo(f"  ← {name}")
+    if not result.archived and not result.restored:
+        click.echo("All contacts are in the correct folder.")
 
 
 @cli.command()
@@ -421,7 +456,20 @@ def cron(ctx: click.Context, full: bool, output: str) -> None:
         if not result.written and not result.removed:
             click.echo("Already up to date.")
 
-    # 2. Birthdays.
+    # 2. Archive — sort contacts by status.
+    click.echo("\n── Archive ──")
+    from jeff.services.archive import run_archive
+
+    archive_dir_ = _archive_dir(ctx)
+    arch_result = run_archive(content_dir, archive_dir_)
+    if arch_result.archived:
+        click.echo(f"  Archived {len(arch_result.archived)} contact(s)")
+    if arch_result.restored:
+        click.echo(f"  Restored {len(arch_result.restored)} contact(s)")
+    if not arch_result.archived and not arch_result.restored:
+        click.echo("  All in correct folder.")
+
+    # 3. Birthdays.
     click.echo("\n── Birthdays ──")
     birthdays = find_birthdays(content_dir)
     if birthdays:

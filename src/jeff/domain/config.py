@@ -24,6 +24,7 @@ class JeffConfig:
     carddav_password: str
     sync_state_path: str = ".sync-state.json"
     content_dir: str = "content/contacts"
+    archive_dir: str = "content/archive"
     photo_dir: str = "static/photos"
     publish_url: str = ""
     mail_to: str = ""
@@ -123,6 +124,10 @@ def load_config(config_path: str | None = None) -> JeffConfig:
         content_dir=(
             os.environ.get("JEFF_CONTENT_DIR")
             or file_data.get("content_dir", "content/contacts")
+        ),
+        archive_dir=(
+            os.environ.get("JEFF_ARCHIVE_DIR")
+            or file_data.get("archive_dir", "content/archive")
         ),
         photo_dir=(
             os.environ.get("JEFF_PHOTO_DIR")

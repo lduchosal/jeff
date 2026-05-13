@@ -52,6 +52,7 @@ def run_sync(
     base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
     state_path = base / cfg.sync_state_path
     content_dir = base / cfg.content_dir
+    archive_dir = base / cfg.archive_dir
     photo_dir = base / cfg.photo_dir
 
     client = CardDAVClient(
@@ -87,7 +88,7 @@ def run_sync(
     for i, contact in enumerate(updated, 1):
         data = parse_vcard(contact.vcard_raw)
         log(f"Transform [{i}/{len(updated)}] {data.get('name', '?')}")
-        path = contact_to_markdown(contact, content_dir, photo_dir)
+        path = contact_to_markdown(contact, content_dir, photo_dir, archive_dir)
         written.append(path.name)
 
     # Handle deleted contacts.
