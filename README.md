@@ -132,7 +132,30 @@ Pour chaque contact famille, affiche les membres du même nom de famille numéro
 
 `jeff famille --check` vérifie que tous les liens sont bidirectionnels et propose de corriger les incohérences.
 
-### 5. `jeff cron` — Automatisation quotidienne
+### 5. `jeff note` — Consigner une interaction
+
+```sh
+jeff note antoine                       # note pour aujourd'hui
+jeff note antoine --date 2025-05-06     # date passée
+```
+
+```
+  Antoine Martin
+  type (w=whatsapp  t=tel  m=mail  v=visite  n=note): w
+  note: Discussion sur le cholesterol. Partage une video YouTube educative.
+  ✓ 2025-05-06.md
+```
+
+Crée un fichier d'interaction daté dans le dossier du contact. La recherche est partielle — `jeff note ant` trouve "Antoine Martin". Chaque interaction est un `.md` avec date et type, visible dans le dossier du contact :
+
+```
+content/contacts/antoine-martin/
+  antoine-martin.md     # fiche contact
+  2025-05-06.md         # interaction WhatsApp
+  2025-04-01.md         # interaction téléphone
+```
+
+### 6. `jeff cron` — Automatisation quotidienne
 
 ```sh
 jeff cron

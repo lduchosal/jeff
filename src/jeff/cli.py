@@ -135,7 +135,7 @@ def migrate(ctx: click.Context) -> None:
 )
 @click.pass_context
 def note(ctx: click.Context, query: str, date_str: str | None) -> None:
-    """Add an interaction note to a contact.
+    r"""Add an interaction note to a contact.
 
     \b
     Examples:
@@ -188,7 +188,7 @@ def note(ctx: click.Context, query: str, date_str: str | None) -> None:
 def sync(
     ctx: click.Context, full: bool, writeback_gender: bool, writeback_famille: bool
 ) -> None:
-    """Sync contacts from CardDAV to Markdown files.
+    r"""Sync contacts from CardDAV to Markdown files.
 
     \b
     Examples:
@@ -237,7 +237,7 @@ def sync(
 )
 @click.pass_context
 def publish(ctx: click.Context, output: str) -> None:
-    """Build a static HTML site from synced Markdown contacts.
+    r"""Build a static HTML site from synced Markdown contacts.
 
     \b
     Examples:
@@ -272,7 +272,7 @@ def publish(ctx: click.Context, output: str) -> None:
 )
 @click.pass_context
 def export_cmd(ctx: click.Context, fmt: str, output: str) -> None:
-    """Export active contacts to an address book format.
+    r"""Export active contacts to an address book format.
 
     \b
     Examples:
@@ -298,7 +298,7 @@ def export_cmd(ctx: click.Context, fmt: str, output: str) -> None:
 @click.option("--tomorrow", is_flag=True, help="Send for tomorrow instead of today.")
 @click.pass_context
 def birthday_mail(ctx: click.Context, tomorrow: bool) -> None:
-    """Send birthday reminder email via sendmail.
+    r"""Send birthday reminder email via sendmail.
 
     \b
     Examples:
@@ -328,7 +328,7 @@ def birthday_mail(ctx: click.Context, tomorrow: bool) -> None:
 @cli.command()
 @click.pass_context
 def check(ctx: click.Context) -> None:
-    """Check for duplicate contacts (same UID) and propose cleanup.
+    r"""Check for duplicate contacts (same UID) and propose cleanup.
 
     \b
     Example: jeff check
@@ -374,7 +374,7 @@ def check(ctx: click.Context) -> None:
 )
 @click.pass_context
 def cron(ctx: click.Context, full: bool, output: str) -> None:
-    """Daily cron job: sync + birthdays + publish.
+    r"""Daily cron job: sync + birthdays + publish.
 
     \b
     Examples:
@@ -434,7 +434,7 @@ def cron(ctx: click.Context, full: bool, output: str) -> None:
 @click.option("--all", "show_all", is_flag=True, help="Include already triaged.")
 @click.pass_context
 def triage(ctx: click.Context, show_all: bool) -> None:
-    """Interactive triage of contacts.
+    r"""Interactive triage of contacts.
 
     \b
     Examples:
@@ -522,7 +522,7 @@ def triage(ctx: click.Context, show_all: bool) -> None:
 @cli.command()
 @click.pass_context
 def genre(ctx: click.Context) -> None:
-    """Assign gender (H/F/N) on contacts without one.
+    r"""Assign gender (H/F/N) on contacts without one.
 
     \b
     Example: jeff genre
@@ -563,7 +563,7 @@ def genre(ctx: click.Context) -> None:
 @cli.command(name="delete")
 @click.pass_context
 def delete_cmd(ctx: click.Context) -> None:
-    """Mark contacts for deletion, then confirm.
+    r"""Mark contacts for deletion, then confirm.
 
     Reviews contacts with delete field empty. Skipped contacts get
     delete=false so they won't be asked again.
@@ -643,7 +643,7 @@ def delete_cmd(ctx: click.Context) -> None:
 @click.argument("query", required=False, default=None)
 @click.pass_context
 def famille(ctx: click.Context, check: bool, query: str | None) -> None:
-    """Batch-edit family links, or --check consistency.
+    r"""Batch-edit family links, or --check consistency.
 
     \b
     Examples:
