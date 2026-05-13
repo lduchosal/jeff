@@ -141,8 +141,8 @@ jeff note antoine --date 2025-05-06     # date passée
 
 ```
   Antoine Martin
-  type (w=whatsapp  t=tel  m=mail  v=visite  n=note): w
-  note: Discussion sur le cholesterol. Partage une video YouTube educative.
+  type (w=whatsapp  t=tel  m=mail  v=visite  n=note): t
+  note: Pris des nouvelles, on planifie une rando pour juin.
   ✓ 2025-05-06.md
 ```
 
