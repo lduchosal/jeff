@@ -19,6 +19,11 @@ def migrate_to_folders(content_dir: Path) -> tuple[int, int]:
     migrated = 0
     already = 0
 
+    # Count contacts already in folder layout.
+    for d in sorted(content_dir.iterdir()):
+        if d.is_dir() and (d / f"{d.name}.md").exists():
+            already += 1
+
     for md in sorted(content_dir.glob("*.md")):
         data = load_contact(md)
         if not data:

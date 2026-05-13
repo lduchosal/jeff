@@ -425,6 +425,49 @@ class TestDeleteCommand:
         assert "delete: false" in text
 
 
+class TestMigrateCommand:
+    """Tests for the migrate command."""
+
+    def test_migrate_flat(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Migrates flat .md files into folders."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        (content / "test.md").write_text(
+            "---\nname: Test\nslug: test\n---\n"
+        )
+        result = runner.invoke(cli, ["migrate"])
+        assert result.exit_code == 0
+        assert "Migrated 1" in result.output
+        assert (content / "test" / "test.md").exists()
+
+    def test_migrate_already_done(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Reports already migrated."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        (content / "test").mkdir()
+        (content / "test" / "test.md").write_text(
+            "---\nname: Test\nslug: test\n---\n"
+        )
+        result = runner.invoke(cli, ["migrate"])
+        assert result.exit_code == 0
+        assert "already" in result.output
+
+
+class TestNoteCommand:
+    """Tests for the note command."""
+
+    def test_note_creates_interaction(self, runner: CliRunner, jeff_env: Path) -> None:
+        """Creates an interaction file."""
+        content = jeff_env / "content" / "contacts"
+        content.mkdir(parents=True)
+        (content / "test").mkdir()
+        (content / "test" / "test.md").write_text(
+            "---\nname: Test User\nslug: test\n---\n"
+        )
+        result = runner.invoke(cli, ["note", "test"], input="w\nHello world\n")
+        assert result.exit_code == 0
+
+
 class TestBirthdayMailCommand:
     """Tests for the birthday-mail command."""
 
