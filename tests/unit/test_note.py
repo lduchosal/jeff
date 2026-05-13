@@ -18,7 +18,8 @@ def _make_contact_dir(tmp_path: Path, slug: str, name: str) -> Path:
     d = tmp_path / slug
     d.mkdir()
     (d / f"{slug}.md").write_text(
-        f"---\nname: {name}\nslug: {slug}\n---\n", encoding="utf-8",
+        f"---\nname: {name}\nslug: {slug}\n---\n",
+        encoding="utf-8",
     )
     return d
 

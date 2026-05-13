@@ -432,9 +432,7 @@ class TestMigrateCommand:
         """Migrates flat .md files into folders."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
-        (content / "test.md").write_text(
-            "---\nname: Test\nslug: test\n---\n"
-        )
+        (content / "test.md").write_text("---\nname: Test\nslug: test\n---\n")
         result = runner.invoke(cli, ["migrate"])
         assert result.exit_code == 0
         assert "Migrated 1" in result.output
@@ -445,9 +443,7 @@ class TestMigrateCommand:
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
         (content / "test").mkdir()
-        (content / "test" / "test.md").write_text(
-            "---\nname: Test\nslug: test\n---\n"
-        )
+        (content / "test" / "test.md").write_text("---\nname: Test\nslug: test\n---\n")
         result = runner.invoke(cli, ["migrate"])
         assert result.exit_code == 0
         assert "already" in result.output

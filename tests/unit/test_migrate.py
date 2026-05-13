@@ -13,10 +13,12 @@ class TestMigrateToFolders:
     def test_migrates_flat_files(self, tmp_path: Path) -> None:
         """Moves .md files into slug directories."""
         (tmp_path / "jean.md").write_text(
-            "---\nname: Jean\nslug: jean\n---\n", encoding="utf-8",
+            "---\nname: Jean\nslug: jean\n---\n",
+            encoding="utf-8",
         )
         (tmp_path / "marie.md").write_text(
-            "---\nname: Marie\nslug: marie\n---\n", encoding="utf-8",
+            "---\nname: Marie\nslug: marie\n---\n",
+            encoding="utf-8",
         )
         migrated, already = migrate_to_folders(tmp_path)
         assert migrated == 2
@@ -30,7 +32,8 @@ class TestMigrateToFolders:
         slug_dir = tmp_path / "jean"
         slug_dir.mkdir()
         (slug_dir / "jean.md").write_text(
-            "---\nname: Jean\nslug: jean\n---\n", encoding="utf-8",
+            "---\nname: Jean\nslug: jean\n---\n",
+            encoding="utf-8",
         )
         migrated, already = migrate_to_folders(tmp_path)
         assert migrated == 0
