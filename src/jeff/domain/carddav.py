@@ -257,11 +257,11 @@ class CardDAVClient:
         """
         url = self._absolute(href)
         _log.debug("PUT %s (If-Match: %s)", href, etag)
-        headers = {
+        hdrs: dict[str, str | bytes] = {
             "Content-Type": "text/vcard",
             "If-Match": f'"{etag}"',
         }
-        resp = self._session.put(url, data=vcard_raw.encode("utf-8"), headers=headers)
+        resp = self._session.put(url, data=vcard_raw.encode("utf-8"), headers=hdrs)
         if resp.status_code == 412:
             return None
         resp.raise_for_status()
@@ -276,8 +276,8 @@ class CardDAVClient:
         """
         url = self._absolute(href)
         _log.debug("DELETE %s (If-Match: %s)", href, etag)
-        headers = {"If-Match": f'"{etag}"'}
-        resp = self._session.delete(url, headers=headers)
+        hdrs: dict[str, str | bytes] = {"If-Match": f'"{etag}"'}
+        resp = self._session.delete(url, headers=hdrs)
         if resp.status_code in (204, 200):
             return True
         if resp.status_code == 412:
@@ -303,9 +303,9 @@ class CardDAVClient:
         depth: str = "0",
     ) -> Any:
         """Send a WebDAV request and return the response."""
-        headers = {"Depth": depth}
+        hdrs: dict[str, str | bytes] = {"Depth": depth}
         resp = self._session.request(
-            method, url, data=body.encode("utf-8"), headers=headers
+            method, url, data=body.encode("utf-8"), headers=hdrs
         )
         resp.raise_for_status()
         return resp
