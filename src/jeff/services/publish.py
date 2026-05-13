@@ -168,7 +168,8 @@ def build_site(
     )
     birthday_slugs = {c.get("slug") for c in birthdays}
 
-    # Render contact pages.
+    # Render contact pages (and enrich with computed fields).
+    enriched: list[_DotDict] = []
     for contact in contacts:
         dc = _DotDict(contact)
         dc["is_birthday"] = dc.get("slug") in birthday_slugs
@@ -212,22 +213,24 @@ def build_site(
                 with suppress(ValueError):
                     latest_date = today.__class__.fromisoformat(latest_str)
                     days = (today - latest_date).days
-                    if days <= 30:
+                    if days <= 10:
                         dc["contact_recency"] = "recent"
-                    elif days <= 90:
+                    elif days <= 60:
                         dc["contact_recency"] = "medium"
-                    else:
+                    elif days <= 180:
                         dc["contact_recency"] = "old"
+                    # > 1 year: no dot
 
         html = contact_tpl.render(contact=dc)
         _log.debug("Render %s.html", slug)
         (contacts_out / f"{slug}.html").write_text(html, encoding="utf-8")
+        enriched.append(dc)
 
-    # Group contacts by relation for the dashboard.
+    # Group enriched contacts by relation for the dashboard.
     groups: dict[str, list[_DotDict]] = {}
-    for c in contacts:
+    for c in enriched:
         rel = c.get("relation") or "autre"
-        groups.setdefault(rel, []).append(_DotDict(c))
+        groups.setdefault(rel, []).append(c)
 
     # Stats for the dashboard.
     by_priority: dict[str, int] = {}
@@ -246,7 +249,7 @@ def build_site(
 
     # Render index.
     index_html = index_tpl.render(
-        contacts=[_DotDict(c) for c in contacts],
+        contacts=enriched,
         groups=sorted_groups,
         stats=stats,
         birthdays=birthdays,

@@ -157,3 +157,58 @@ class TestBuildSite:
         assert count == 0
         assert (output_dir / "index.html").exists()
         assert "0 contact" in (output_dir / "index.html").read_text()
+
+    def test_recency_dot_recent(self, tmp_path: Path) -> None:
+        """Shows green recency dot for contact with recent interaction."""
+        from datetime import date, timedelta
+
+        content_dir = tmp_path / "content" / "contacts"
+        contact_dir = content_dir / "jean-dupont"
+        contact_dir.mkdir(parents=True)
+        (contact_dir / "jean-dupont.md").write_text(SAMPLE_MD)
+
+        # Create a recent interaction (today).
+        today = date.today().isoformat()
+        (contact_dir / f"{today}.md").write_text(
+            f"---\ndate: {today}\ntype: tel\n---\n\nAppel rapide.\n"
+        )
+
+        output_dir = tmp_path / "public"
+        build_site(content_dir, output_dir)
+
+        index = (output_dir / "index.html").read_text()
+        assert "recency-dot--recent" in index
+
+    def test_recency_dot_old(self, tmp_path: Path) -> None:
+        """Shows red recency dot for contact with old interaction (< 6 months)."""
+        from datetime import date, timedelta
+
+        content_dir = tmp_path / "content" / "contacts"
+        contact_dir = content_dir / "jean-dupont"
+        contact_dir.mkdir(parents=True)
+        (contact_dir / "jean-dupont.md").write_text(SAMPLE_MD)
+
+        # Create an interaction 100 days ago (within 6 months).
+        old_date = (date.today() - timedelta(days=100)).isoformat()
+        (contact_dir / f"{old_date}.md").write_text(
+            f"---\ndate: {old_date}\ntype: tel\n---\n\nVieux appel.\n"
+        )
+
+        output_dir = tmp_path / "public"
+        build_site(content_dir, output_dir)
+
+        index = (output_dir / "index.html").read_text()
+        assert "recency-dot--old" in index
+
+    def test_no_recency_dot_without_interactions(self, tmp_path: Path) -> None:
+        """No recency dot when contact has no interactions."""
+        content_dir = tmp_path / "content" / "contacts"
+        contact_dir = content_dir / "jean-dupont"
+        contact_dir.mkdir(parents=True)
+        (contact_dir / "jean-dupont.md").write_text(SAMPLE_MD)
+
+        output_dir = tmp_path / "public"
+        build_site(content_dir, output_dir)
+
+        index = (output_dir / "index.html").read_text()
+        assert "recency-dot" not in index
