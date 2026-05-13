@@ -136,6 +136,25 @@ def migrate(ctx: click.Context) -> None:
     click.echo(f"Migrated {migrated} contact(s), {already} already in folders.")
 
 
+@cli.command(name="import")
+@click.argument("json_file", type=click.Path(exists=True))
+@click.pass_context
+def import_cmd(ctx: click.Context, json_file: str) -> None:
+    r"""Import contacts from a JSON file.
+
+    \b
+    Examples:
+      jeff import contacts.json
+      jeff import export-crm.json
+    Schema: doc/schema/contact.schema.json
+    """
+    from jeff.services.import_contacts import import_from_json
+
+    content_dir = _content_dir(ctx)
+    imported, skipped = import_from_json(Path(json_file), content_dir)
+    click.echo(f"Imported {imported} contact(s), {skipped} skipped.")
+
+
 @cli.command()
 @click.pass_context
 def archive(ctx: click.Context) -> None:

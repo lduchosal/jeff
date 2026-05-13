@@ -1,0 +1,40 @@
+[
+  {
+    "uid": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Jean Dupont",
+    "name_family": "Dupont",
+    "name_given": "Jean",
+    "email": "jean@example.com",
+    "emails": [
+      { "address": "jean@example.com", "type": "work", "pref": true }
+    ],
+    "phone": "+41791234567",
+    "phones": [
+      { "number": "+41791234567", "type": "cell" }
+    ],
+    "birthday": "1985-03-15",
+    "genre": "homme",
+    "note": "Rencontré au meetup Python.",
+    "tags": ["ami", "tech"],
+    "addresses": [
+      {
+        "type": "home",
+        "street": "Rue du Marché 12",
+        "city": "Genève",
+        "postal_code": "1204",
+        "country": "Suisse"
+      }
+    ],
+    "positions": [
+      { "org": "Acme Corp", "title": "CTO" }
+    ]
+  },
+  {
+    "name": "Marie Martin",
+    "name_family": "Martin",
+    "name_given": "Marie",
+    "email": "marie@example.com",
+    "phone": "+41790000000",
+    "genre": "femme"
+  }
+]

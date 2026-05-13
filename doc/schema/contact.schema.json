@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lduchosal/jeff/doc/schema/contact.schema.json",
+  "title": "Jeff Contact",
+  "description": "Schema for importing contacts into jeff CRM.",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "uid": {
+      "type": "string",
+      "description": "Unique identifier (e.g. UUID)."
+    },
+    "name": {
+      "type": "string",
+      "description": "Full display name."
+    },
+    "name_family": {
+      "type": "string",
+      "description": "Family name / last name."
+    },
+    "name_given": {
+      "type": "string",
+      "description": "Given name / first name."
+    },
+    "name_prefix": {
+      "type": "string",
+      "description": "Name prefix (Mr, Dr, etc.)."
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Primary email address."
+    },
+    "emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["address"],
+        "properties": {
+          "address": { "type": "string", "format": "email" },
+          "type": { "type": "string", "enum": ["home", "work"] },
+          "pref": { "type": "boolean" }
+        }
+      }
+    },
+    "phone": {
+      "type": "string",
+      "description": "Primary phone number."
+    },
+    "phones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["number"],
+        "properties": {
+          "number": { "type": "string" },
+          "type": { "type": "string", "enum": ["home", "work", "cell", "fax"] },
+          "pref": { "type": "boolean" }
+        }
+      }
+    },
+    "birthday": {
+      "type": "string",
+      "format": "date",
+      "description": "Birthday (YYYY-MM-DD)."
+    },
+    "genre": {
+      "type": "string",
+      "enum": ["homme", "femme", "none"],
+      "description": "Gender."
+    },
+    "note": {
+      "type": "string",
+      "description": "Free-text notes."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Tags / categories."
+    },
+    "addresses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["home", "work"] },
+          "street": { "type": "string" },
+          "city": { "type": "string" },
+          "region": { "type": "string" },
+          "postal_code": { "type": "string" },
+          "country": { "type": "string" }
+        }
+      }
+    },
+    "positions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "org": { "type": "string" },
+          "title": { "type": "string" }
+        }
+      }
+    },
+    "urls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "type": { "type": "string" }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["actif", "archivé"],
+      "description": "Contact status."
+    },
+    "relation": {
+      "type": "string",
+      "enum": ["ami", "collegue", "famille", "connaissance"],
+      "description": "Relationship type."
+    },
+    "priorite": {
+      "type": "string",
+      "enum": ["haute", "moyenne", "basse"],
+      "description": "Priority level."
+    },
+    "frequence": {
+      "type": "string",
+      "enum": ["hebdo", "mensuel", "trimestriel", "annuel"],
+      "description": "Desired contact frequency."
+    }
+  }
+}
