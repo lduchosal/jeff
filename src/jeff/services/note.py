@@ -48,11 +48,13 @@ def list_interactions(contact_dir: Path) -> list[dict[str, Any]]:
         else:
             # Simple .md without frontmatter — read as plain text.
             text = md.read_text(encoding="utf-8").strip()
-            interactions.append({
-                "date": md.stem,
-                "note": text,
-                "_path": md,
-            })
+            interactions.append(
+                {
+                    "date": md.stem,
+                    "note": text,
+                    "_path": md,
+                }
+            )
     return interactions
 
 

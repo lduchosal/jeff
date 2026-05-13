@@ -122,7 +122,9 @@ def migrate(ctx: click.Context) -> None:
 
 @cli.command()
 @click.argument("query")
-@click.option("--date", "date_str", default=None, help="Date (YYYY-MM-DD, default today).")
+@click.option(
+    "--date", "date_str", default=None, help="Date (YYYY-MM-DD, default today)."
+)
 @click.pass_context
 def note(ctx: click.Context, query: str, date_str: str | None) -> None:
     """Add an interaction note to a contact."""

@@ -133,7 +133,9 @@ class TestPublishCommand:
         content.mkdir(parents=True)
         (content / "test").mkdir(exist_ok=True)
 
-        (content / "test" / "test.md").write_text("---\nname: Test User\nslug: test\n---\n")
+        (content / "test" / "test.md").write_text(
+            "---\nname: Test User\nslug: test\n---\n"
+        )
         result = runner.invoke(cli, ["publish"])
         assert result.exit_code == 0
         assert "1 contact" in result.output
@@ -257,7 +259,9 @@ class TestGenreCommand:
         content.mkdir(parents=True)
         (content / "test").mkdir(exist_ok=True)
 
-        (content / "test" / "test.md").write_text("---\nname: Test\nslug: test\ngenre:\n---\n")
+        (content / "test" / "test.md").write_text(
+            "---\nname: Test\nslug: test\ngenre:\n---\n"
+        )
         result = runner.invoke(cli, ["genre"], input="q\n")
         assert result.exit_code == 0
 
@@ -398,7 +402,9 @@ class TestDeleteCommand:
         content.mkdir(parents=True)
         (content / "test").mkdir(exist_ok=True)
 
-        (content / "test" / "test.md").write_text("---\nname: Test\nslug: test\ndelete:\n---\n")
+        (content / "test" / "test.md").write_text(
+            "---\nname: Test\nslug: test\ndelete:\n---\n"
+        )
         result = runner.invoke(cli, ["delete"], input="d\ny\n")
         assert result.exit_code == 0
         text = (content / "test" / "test.md").read_text()
@@ -410,7 +416,9 @@ class TestDeleteCommand:
         content.mkdir(parents=True)
         (content / "test").mkdir(exist_ok=True)
 
-        (content / "test" / "test.md").write_text("---\nname: Test\nslug: test\ndelete:\n---\n")
+        (content / "test" / "test.md").write_text(
+            "---\nname: Test\nslug: test\ndelete:\n---\n"
+        )
         result = runner.invoke(cli, ["delete"], input="\n")
         assert result.exit_code == 0
         text = (content / "test" / "test.md").read_text()
