@@ -483,7 +483,9 @@ class TestNoteCommand:
         assert "type: whatsapp" in text
         assert "Planification rando" in text
 
-    def test_note_non_interactive_with_date(self, runner: CliRunner, jeff_env: Path) -> None:
+    def test_note_non_interactive_with_date(
+        self, runner: CliRunner, jeff_env: Path
+    ) -> None:
         """Creates an interaction with a specific date."""
         content = jeff_env / "content" / "contacts"
         content.mkdir(parents=True)
@@ -492,7 +494,8 @@ class TestNoteCommand:
             "---\nname: Test User\nslug: test\n---\n"
         )
         result = runner.invoke(
-            cli, ["note", "test", "-t", "tel", "-m", "Appel rapide", "--date", "2025-05-06"]
+            cli,
+            ["note", "test", "-t", "tel", "-m", "Appel rapide", "--date", "2025-05-06"],
         )
         assert result.exit_code == 0
         assert (content / "test" / "2025-05-06.md").exists()

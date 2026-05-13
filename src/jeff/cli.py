@@ -130,20 +130,33 @@ def migrate(ctx: click.Context) -> None:
 
 @cli.command()
 @click.argument("query")
-@click.option("-t", "--type", "type_code", default=None, help="Type: w=whatsapp t=tel m=mail v=visite n=note.")
-@click.option("-m", "--message", default=None, help="Note content (non-interactive mode).")
-@click.option("--date", "date_str", default=None, help="Date (YYYY-MM-DD, default today).")
+@click.option(
+    "-t",
+    "--type",
+    "type_code",
+    default=None,
+    help="Type: w=whatsapp t=tel m=mail v=visite n=note.",
+)
+@click.option(
+    "-m", "--message", default=None, help="Note content (non-interactive mode)."
+)
+@click.option(
+    "--date", "date_str", default=None, help="Date (YYYY-MM-DD, default today)."
+)
 @click.pass_context
-def note(ctx: click.Context, query: str, type_code: str | None, message: str | None, date_str: str | None) -> None:
+def note(
+    ctx: click.Context,
+    query: str,
+    type_code: str | None,
+    message: str | None,
+    date_str: str | None,
+) -> None:
     r"""Add an interaction note to a contact.
 
-    \b
-    Non-interactive (agent mode):
-      jeff note antoine -t w -m "Planification rando juin"
-      jeff note martin -t tel -m "Pris des nouvelles" --date 2025-05-06
+    \b Non-interactive (agent mode):   jeff note antoine -t w -m "Planification rando
+    juin"   jeff note martin -t tel -m "Pris des nouvelles" --date 2025-05-06
 
-    Interactive (human mode):
-      jeff note antoine
+    Interactive (human mode):   jeff note antoine
     """
     from datetime import date
 
