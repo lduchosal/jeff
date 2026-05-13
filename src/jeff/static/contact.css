@@ -783,6 +783,40 @@ body {
   background: #fdf2f8;
 }
 
+/* --- Timeline --- */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.timeline-item {
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-bg-secondary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.timeline-item__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.timeline-item__date {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.timeline-item__body {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-normal);
+  white-space: pre-line;
+}
+
 /* --- Utility --- */
 .visually-hidden {
   position: absolute;
