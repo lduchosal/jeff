@@ -201,6 +201,24 @@ def build_site(
                 interactions.append(_DotDict(inter))
         dc["interactions"] = interactions
 
+        # Compute recent contact indicator from interactions.
+        dc["contact_recency"] = ""
+        if interactions:
+            latest = interactions[0].get("date")
+            if latest:
+                latest_str = str(latest)
+                from contextlib import suppress
+
+                with suppress(ValueError):
+                    latest_date = today.__class__.fromisoformat(latest_str)
+                    days = (today - latest_date).days
+                    if days <= 30:
+                        dc["contact_recency"] = "recent"
+                    elif days <= 90:
+                        dc["contact_recency"] = "medium"
+                    else:
+                        dc["contact_recency"] = "old"
+
         html = contact_tpl.render(contact=dc)
         _log.debug("Render %s.html", slug)
         (contacts_out / f"{slug}.html").write_text(html, encoding="utf-8")

@@ -86,8 +86,8 @@
             </div>
           {% endif %}
         </div>
-        {% if contact.priorite %}
-          <span class="priority-dot priority-dot--{{ contact.priorite }}"></span>
+        {% if contact.contact_recency %}
+          <span class="recency-dot recency-dot--{{ contact.contact_recency }}"></span>
         {% endif %}
       </a>
       {% endfor %}
