@@ -13,8 +13,8 @@ from jeff.domain.transform import render_frontmatter, slugify
 def import_from_json(json_path: Path, content_dir: Path) -> tuple[int, int]:
     """Import contacts from a JSON file into content_dir.
 
-    Returns (imported_count, skipped_count).
-    Skips contacts whose slug directory already exists.
+    Returns (imported_count, skipped_count). Skips contacts whose slug directory already
+    exists.
     """
     data = json.loads(json_path.read_text(encoding="utf-8"))
     if not isinstance(data, list):
@@ -39,7 +39,8 @@ def import_from_json(json_path: Path, content_dir: Path) -> tuple[int, int]:
         contact_dir.mkdir(parents=True, exist_ok=True)
         frontmatter = render_frontmatter(contact)
         (contact_dir / f"{slug}.md").write_text(
-            f"{frontmatter}\n", encoding="utf-8",
+            f"{frontmatter}\n",
+            encoding="utf-8",
         )
         imported += 1
 
@@ -77,7 +78,8 @@ def _normalize(entry: dict[str, Any]) -> dict[str, Any]:
             contact["phone"] = entry["phones"][0].get("number", "")
         # Compute phone_cell.
         cell = next(
-            (p for p in entry["phones"] if p.get("type") == "cell"), None,
+            (p for p in entry["phones"] if p.get("type") == "cell"),
+            None,
         )
         pref = next(
             (p for p in entry["phones"] if p.get("pref")),
@@ -87,8 +89,18 @@ def _normalize(entry: dict[str, Any]) -> dict[str, Any]:
 
     # Other fields — pass through.
     for field in (
-        "birthday", "signe", "note", "tags", "addresses", "positions",
-        "urls", "genre", "status", "relation", "priorite", "frequence",
+        "birthday",
+        "signe",
+        "note",
+        "tags",
+        "addresses",
+        "positions",
+        "urls",
+        "genre",
+        "status",
+        "relation",
+        "priorite",
+        "frequence",
     ):
         if entry.get(field):
             contact[field] = entry[field]

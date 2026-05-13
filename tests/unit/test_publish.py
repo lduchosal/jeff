@@ -160,7 +160,7 @@ class TestBuildSite:
 
     def test_recency_dot_recent(self, tmp_path: Path) -> None:
         """Shows green recency dot for contact with recent interaction."""
-        from datetime import date, timedelta
+        from datetime import date
 
         content_dir = tmp_path / "content" / "contacts"
         contact_dir = content_dir / "jean-dupont"
