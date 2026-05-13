@@ -154,8 +154,15 @@ def _parse_addresses(vc: Any, data: dict[str, Any]) -> None:
         if atype:
             entry["type"] = atype
         if a.street:
-            entry["street"] = _collapse_newlines(a.street) if "\n" in a.street else a.street
-        for field, attr in (("city", "city"), ("region", "region"), ("postal_code", "code"), ("country", "country")):
+            entry["street"] = (
+                _collapse_newlines(a.street) if "\n" in a.street else a.street
+            )
+        for field, attr in (
+            ("city", "city"),
+            ("region", "region"),
+            ("postal_code", "code"),
+            ("country", "country"),
+        ):
             val = getattr(a, attr, None)
             if val:
                 entry[field] = val
