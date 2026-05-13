@@ -6,6 +6,13 @@ is visible and clickable in Apple Contacts / iOS. See task #273 for the design d
 
 from __future__ import annotations
 
+_END_VCARD = "END:VCARD"
+
+
+def _is_end_vcard(line: str) -> bool:
+    """Check if a line is the END:VCARD delimiter."""
+    return line.strip().upper() == _END_VCARD
+
 
 def inject_crm_url(vcard_raw: str, profile_url: str) -> str | None:
     """Inject a CRM profile URL into a vCard string.
@@ -25,7 +32,7 @@ def inject_crm_url(vcard_raw: str, profile_url: str) -> str | None:
     # Insert before END:VCARD.
     new_lines: list[str] = []
     for line in lines:
-        if line.strip().upper() == "END:VCARD":
+        if _is_end_vcard(line):
             new_lines.extend(
                 (f"item99.URL:{profile_url}", "item99.X-ABLabel:Profil CRM")
             )
@@ -55,7 +62,7 @@ def inject_gender(vcard_raw: str, genre: str) -> str | None:
     # Insert before END:VCARD.
     new_lines: list[str] = []
     for line in lines:
-        if line.strip().upper() == "END:VCARD":
+        if _is_end_vcard(line):
             new_lines.append(existing_line)
         new_lines.append(line)
 
@@ -96,7 +103,7 @@ def inject_related(
     # Insert new RELATED lines before END:VCARD.
     new_lines: list[str] = []
     for line in other_lines:
-        if line.strip().upper() == "END:VCARD":
+        if _is_end_vcard(line):
             new_lines.extend(target_lines)
         new_lines.append(line)
 

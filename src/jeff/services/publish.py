@@ -19,6 +19,8 @@ from jeff.services.triage import iter_contact_files
 
 _log = get_logger("publish")
 
+_CSS_FILENAME = "contact.css"
+
 
 def _parse_frontmatter(path: Path) -> dict[str, Any]:
     """Parse YAML frontmatter from a Markdown file.
@@ -113,13 +115,13 @@ def build_site(
 
     # Copy CSS: user-provided > bundled in package > empty placeholder.
     if css_path and css_path.is_file():
-        shutil.copy2(css_path, css_out / "contact.css")
+        shutil.copy2(css_path, css_out / _CSS_FILENAME)
     else:
-        bundled_css = resources.files("jeff").joinpath("static", "contact.css")
+        bundled_css = resources.files("jeff").joinpath("static", _CSS_FILENAME)
         if hasattr(bundled_css, "is_file") and bundled_css.is_file():
-            shutil.copy2(str(bundled_css), css_out / "contact.css")
+            shutil.copy2(str(bundled_css), css_out / _CSS_FILENAME)
         else:
-            (css_out / "contact.css").write_text("/* no css found */", encoding="utf-8")
+            (css_out / _CSS_FILENAME).write_text("/* no css found */", encoding="utf-8")
 
     # Copy bundled fonts CSS and font files.
     static_dir = resources.files("jeff").joinpath("static")

@@ -61,23 +61,28 @@ def slugify(text: str) -> str:
 
 
 def parse_vcard(vcard_raw: str) -> dict[str, Any]:
-    """Parse a vCard string into a flat dict for YAML frontmatter.
-
-    Extracts all standard fields. Missing fields are omitted (not set to None) so the
-    frontmatter stays clean.
-    """
+    """Parse a vCard string into a flat dict for YAML frontmatter."""
     vc = vobject.readOne(vcard_raw)
     data: dict[str, Any] = {}
+    _parse_identity(vc, data)
+    _parse_emails(vc, data)
+    _parse_phones(vc, data)
+    _parse_addresses(vc, data)
+    _parse_positions(vc, data)
+    _parse_birthday(vc, data)
+    _parse_tags(vc, data)
+    _parse_urls(vc, data)
+    _parse_misc(vc, data)
+    return data
 
-    # UID
+
+def _parse_identity(vc: Any, data: dict[str, Any]) -> None:
+    """Extract uid, name, slug from vCard."""
     if hasattr(vc, "uid"):
         data["uid"] = vc.uid.value
-
-    # Name
     if hasattr(vc, "fn"):
         data["name"] = vc.fn.value
         data["slug"] = slugify(vc.fn.value)
-
     if hasattr(vc, "n"):
         n = vc.n.value
         if n.family:
@@ -89,153 +94,149 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
         if n.suffix:
             data["name_suffix"] = n.suffix
 
-    # Emails
+
+def _extract_type(params: dict, valid: tuple[str, ...]) -> str | None:
+    """Extract the first matching TYPE from vCard params."""
+    types = params.get("TYPE", [])
+    return next((t.lower() for t in types if t.lower() in valid), None)
+
+
+def _parse_emails(vc: Any, data: dict[str, Any]) -> None:
+    """Extract emails from vCard."""
     emails = vc.contents.get("email", [])
-    if emails:
-        email_list = []
-        for em in emails:
-            entry: dict[str, Any] = {"address": em.value}
-            types = em.params.get("TYPE", [])
-            etype = next(
-                (t.lower() for t in types if t.lower() in ("home", "work")),
-                None,
-            )
-            if etype:
-                entry["type"] = etype
-            if "PREF" in types:
-                entry["pref"] = True
-            email_list.append(entry)
-        data["emails"] = email_list
-        # Convenience scalar: pref or first.
-        pref = next((e for e in email_list if e.get("pref")), email_list[0])
-        data["email"] = pref["address"]
+    if not emails:
+        return
+    email_list = []
+    for em in emails:
+        entry: dict[str, Any] = {"address": em.value}
+        etype = _extract_type(em.params, ("home", "work"))
+        if etype:
+            entry["type"] = etype
+        if "PREF" in em.params.get("TYPE", []):
+            entry["pref"] = True
+        email_list.append(entry)
+    data["emails"] = email_list
+    pref = next((e for e in email_list if e.get("pref")), email_list[0])
+    data["email"] = pref["address"]
 
-    # Phones
+
+def _parse_phones(vc: Any, data: dict[str, Any]) -> None:
+    """Extract phones from vCard."""
     tels = vc.contents.get("tel", [])
-    if tels:
-        phone_list = []
-        for tel in tels:
-            entry = {"number": tel.value}
-            types = tel.params.get("TYPE", [])
-            ptype = next(
-                (
-                    t.lower()
-                    for t in types
-                    if t.lower() in ("home", "work", "cell", "fax")
-                ),
-                None,
-            )
-            if ptype:
-                entry["type"] = ptype
-            if "PREF" in types:
-                entry["pref"] = True
-            phone_list.append(entry)
-        data["phones"] = phone_list
-        pref = next((p for p in phone_list if p.get("pref")), phone_list[0])
-        data["phone"] = pref["number"]
-        # Cell phone for WhatsApp (cell > pref > first).
-        cell = next((p for p in phone_list if p.get("type") == "cell"), None)
-        data["phone_cell"] = (cell or pref)["number"]
+    if not tels:
+        return
+    phone_list = []
+    for tel in tels:
+        entry: dict[str, Any] = {"number": tel.value}
+        ptype = _extract_type(tel.params, ("home", "work", "cell", "fax"))
+        if ptype:
+            entry["type"] = ptype
+        if "PREF" in tel.params.get("TYPE", []):
+            entry["pref"] = True
+        phone_list.append(entry)
+    data["phones"] = phone_list
+    pref = next((p for p in phone_list if p.get("pref")), phone_list[0])
+    data["phone"] = pref["number"]
+    cell = next((p for p in phone_list if p.get("type") == "cell"), None)
+    data["phone_cell"] = (cell or pref)["number"]
 
-    # Addresses
+
+def _parse_addresses(vc: Any, data: dict[str, Any]) -> None:
+    """Extract addresses from vCard."""
     adrs = vc.contents.get("adr", [])
-    if adrs:
-        addr_list = []
-        for adr in adrs:
-            a = adr.value
-            entry = {}
-            types = adr.params.get("TYPE", [])
-            atype = next(
-                (t.lower() for t in types if t.lower() in ("home", "work")),
-                None,
-            )
-            if atype:
-                entry["type"] = atype
-            if a.street:
-                entry["street"] = (
-                    _collapse_newlines(a.street) if "\n" in a.street else a.street
-                )
-            if a.city:
-                entry["city"] = a.city
-            if a.region:
-                entry["region"] = a.region
-            if a.code:
-                entry["postal_code"] = a.code
-            if a.country:
-                entry["country"] = a.country
-            if entry:
-                addr_list.append(entry)
-        if addr_list:
-            data["addresses"] = addr_list
+    if not adrs:
+        return
+    addr_list = []
+    for adr in adrs:
+        a = adr.value
+        entry: dict[str, Any] = {}
+        atype = _extract_type(adr.params, ("home", "work"))
+        if atype:
+            entry["type"] = atype
+        if a.street:
+            entry["street"] = _collapse_newlines(a.street) if "\n" in a.street else a.street
+        for field, attr in (("city", "city"), ("region", "region"), ("postal_code", "code"), ("country", "country")):
+            val = getattr(a, attr, None)
+            if val:
+                entry[field] = val
+        if entry:
+            addr_list.append(entry)
+    if addr_list:
+        data["addresses"] = addr_list
 
-    # Org + Title
+
+def _parse_positions(vc: Any, data: dict[str, Any]) -> None:
+    """Extract org + title from vCard."""
     orgs = vc.contents.get("org", [])
     titles = vc.contents.get("title", [])
-    if orgs:
-        positions = []
-        for i, org in enumerate(orgs):
-            org_name = org.value[0] if isinstance(org.value, list) else org.value
-            pos: dict[str, str] = {"org": org_name}
-            if i < len(titles):
-                pos["title"] = titles[i].value
-            positions.append(pos)
-        data["positions"] = positions
+    if not orgs:
+        return
+    positions = []
+    for i, org in enumerate(orgs):
+        org_name = org.value[0] if isinstance(org.value, list) else org.value
+        pos: dict[str, str] = {"org": org_name}
+        if i < len(titles):
+            pos["title"] = titles[i].value
+        positions.append(pos)
+    data["positions"] = positions
 
-    # Birthday + zodiac sign.
-    if hasattr(vc, "bday"):
-        data["birthday"] = vc.bday.value
-        bday_val = vc.bday.value
-        from contextlib import suppress
 
-        with suppress(IndexError, ValueError):
-            if hasattr(bday_val, "month"):
-                sign_name, _ = zodiac_sign(bday_val.month, bday_val.day)
-            else:
-                parts = str(bday_val).split("-")
-                sign_name, _ = zodiac_sign(int(parts[1]), int(parts[2]))
-            data["signe"] = sign_name
+def _parse_birthday(vc: Any, data: dict[str, Any]) -> None:
+    """Extract birthday + zodiac sign from vCard."""
+    if not hasattr(vc, "bday"):
+        return
+    data["birthday"] = vc.bday.value
+    bday_val = vc.bday.value
+    from contextlib import suppress
 
-    # Categories -> tags
+    with suppress(IndexError, ValueError):
+        if hasattr(bday_val, "month"):
+            sign_name, _ = zodiac_sign(bday_val.month, bday_val.day)
+        else:
+            parts = str(bday_val).split("-")
+            sign_name, _ = zodiac_sign(int(parts[1]), int(parts[2]))
+        data["signe"] = sign_name
+
+
+def _parse_tags(vc: Any, data: dict[str, Any]) -> None:
+    """Extract categories as tags from vCard."""
     cats = vc.contents.get("categories", [])
-    if cats:
-        tags: list[str] = []
-        for cat in cats:
-            if isinstance(cat.value, list):
-                tags.extend(cat.value)
-            else:
-                tags.extend(cat.value.split(","))
-        data["tags"] = [t.strip() for t in tags if t.strip()]
+    if not cats:
+        return
+    tags: list[str] = []
+    for cat in cats:
+        if isinstance(cat.value, list):
+            tags.extend(cat.value)
+        else:
+            tags.extend(cat.value.split(","))
+    data["tags"] = [t.strip() for t in tags if t.strip()]
 
-    # URLs
+
+def _parse_urls(vc: Any, data: dict[str, Any]) -> None:
+    """Extract URLs from vCard."""
     urls = vc.contents.get("url", [])
-    if urls:
-        url_list = []
-        for u in urls:
-            entry = {"url": u.value}
-            types = u.params.get("TYPE", [])
-            utype = next(
-                (t.lower() for t in types if t.lower() in ("home", "work")),
-                None,
-            )
-            if utype:
-                entry["type"] = utype
-            url_list.append(entry)
-        data["urls"] = url_list
+    if not urls:
+        return
+    url_list = []
+    for u in urls:
+        entry: dict[str, Any] = {"url": u.value}
+        utype = _extract_type(u.params, ("home", "work"))
+        if utype:
+            entry["type"] = utype
+        url_list.append(entry)
+    data["urls"] = url_list
 
-    # Note
+
+def _parse_misc(vc: Any, data: dict[str, Any]) -> None:
+    """Extract note, photo, rev, gender, related from vCard."""
     if hasattr(vc, "note"):
         data["note"] = vc.note.value
-
-    # Photo (returns the raw bytes + extension, or None)
     photo = vc.contents.get("photo", [None])[0]
     if photo and photo.value:
         data["_photo_data"] = photo
-
-    # REV
     if hasattr(vc, "rev"):
         data["rev"] = vc.rev.value
-
-    # Gender (X-GENDER property).
+    # Gender.
     x_gender = vc.contents.get("x-gender", [None])[0]
     if x_gender and x_gender.value:
         val = x_gender.value.strip().upper()
@@ -243,20 +244,15 @@ def parse_vcard(vcard_raw: str) -> dict[str, Any]:
             data["genre"] = "homme"
         elif val == "F":
             data["genre"] = "femme"
-
-    # RELATED properties (vCard 4.0 family links).
-    related_props = vc.contents.get("related", [])
-    if related_props:
-        for rel in related_props:
-            rtype = ""
-            types = rel.params.get("TYPE", [])
-            if types:
-                rtype = types[0].lower()
-            uid_val = rel.value.removeprefix("urn:uuid:")
-            if rtype and uid_val:
-                data.setdefault("_related", []).append((rtype, uid_val))
-
-    return data
+    # RELATED.
+    for rel in vc.contents.get("related", []):
+        rtype = ""
+        types = rel.params.get("TYPE", [])
+        if types:
+            rtype = types[0].lower()
+        uid_val = rel.value.removeprefix("urn:uuid:")
+        if rtype and uid_val:
+            data.setdefault("_related", []).append((rtype, uid_val))
 
 
 def _collapse_newlines(value: str) -> str:

@@ -292,63 +292,7 @@ body {
 .score--medium .score__dot { background: var(--color-warning); }
 .score--low .score__dot { background: var(--color-danger); }
 
-/* --- Timeline --- */
-.timeline {
-  position: relative;
-  padding-left: var(--space-6);
-}
-
-.timeline::before {
-  content: "";
-  position: absolute;
-  left: 3px;
-  top: 8px;
-  bottom: 8px;
-  width: 1px;
-  background: var(--color-border);
-}
-
-.timeline__item {
-  position: relative;
-  padding-bottom: var(--space-6);
-}
-
-.timeline__item:last-child {
-  padding-bottom: 0;
-}
-
-.timeline__dot {
-  position: absolute;
-  left: calc(-1 * var(--space-6) - 1px);
-  top: 6px;
-  width: 7px;
-  height: 7px;
-  border-radius: var(--radius-full);
-  background: var(--color-border);
-  border: 2px solid var(--color-bg);
-}
-
-.timeline__item:first-child .timeline__dot {
-  background: var(--color-accent);
-}
-
-.timeline__date {
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-  font-family: var(--font-mono);
-  margin-bottom: var(--space-1);
-}
-
-.timeline__content {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  line-height: var(--line-height-normal);
-}
-
-.timeline__content strong {
-  color: var(--color-text-primary);
-  font-weight: var(--weight-medium);
-}
+/* Old timeline classes removed — see .timeline-item below. */
 
 /* --- Follow-up Banner --- */
 .followup-banner {
