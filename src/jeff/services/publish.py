@@ -190,8 +190,18 @@ def build_site(
                 parts = bday_s.split("-")
                 name, _ = zodiac_sign(int(parts[1]), int(parts[2]))
                 dc["signe"] = name
-        html = contact_tpl.render(contact=dc)
+        # Load interactions from the contact's folder.
         slug = contact.get("slug", "contact")
+        contact_dir = content_dir / slug
+        interactions: list[_DotDict] = []
+        if contact_dir.is_dir():
+            from jeff.services.note import list_interactions
+
+            for inter in list_interactions(contact_dir):
+                interactions.append(_DotDict(inter))
+        dc["interactions"] = interactions
+
+        html = contact_tpl.render(contact=dc)
         _log.debug("Render %s.html", slug)
         (contacts_out / f"{slug}.html").write_text(html, encoding="utf-8")
 

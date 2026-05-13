@@ -68,6 +68,25 @@
     </section>
     {% endif %}
 
+    {% if contact.interactions %}
+    <section class="section">
+      <h2 class="section__title">Interactions</h2>
+      <div class="timeline">
+        {% for inter in contact.interactions %}
+        <div class="timeline-item">
+          <div class="timeline-item__header">
+            <span class="timeline-item__date">{{ inter.date }}</span>
+            {% if inter.type %}<span class="tag tag--small">{{ inter.type }}</span>{% endif %}
+          </div>
+          {% if inter.note %}
+          <div class="timeline-item__body">{{ inter.note }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
   </div>
 
   <aside class="contact-sidebar">
