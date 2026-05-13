@@ -197,7 +197,11 @@ print_step "Building Package (pdm)"
 run_command "pdm build" "Package build"
 
 print_step "Publishing Package to PyPI (pdm publish)"
-run_command "PDM_PUBLISH_USERNAME=__token__ PDM_PUBLISH_PASSWORD=\$(grep password ~/.pypirc | cut -d= -f2 | tr -d ' ') pdm publish --no-build" "Package publishing"
+if [ -z "$PDM_PUBLISH_PASSWORD" ] && [ -f "$HOME/.pypirc" ]; then
+    export PDM_PUBLISH_USERNAME=__token__
+    export PDM_PUBLISH_PASSWORD=$(grep password "$HOME/.pypirc" | cut -d= -f2 | tr -d ' ')
+fi
+run_command "pdm publish --no-build" "Package publishing"
 
 print_step "Adding All Files to Git"
 run_command "git add ." "Adding all files to git"
