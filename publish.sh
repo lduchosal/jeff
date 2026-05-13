@@ -165,12 +165,8 @@ run_command "pdm run lint" "Linting"
 print_step "Dead Code Check (vulture)"
 run_command "pdm run vulture" "Dead code check"
 
-print_step "Running Tests (pytest)"
-if [ "$CI_MODE" = true ]; then
-    run_command "pdm run test-ci" "Tests (CI)"
-else
-    run_command "pdm run test-quick" "Tests"
-fi
+print_step "Running Tests with Coverage (pytest)"
+run_command "pdm run test-ci" "Tests"
 
 # Exit here if --quality flag is set
 if [ "$QUALITY_ONLY" = true ]; then
