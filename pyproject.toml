@@ -1,6 +1,6 @@
 [project]
 name = "jeff-contacts"
-version = "0.1.15"
+version = "0.1.16"
 description = "CRM Markdown synchronisé depuis CardDAV (Baikal), publié en site statique Hugo."
 authors = [
     { name = "lduchosal" },
@@ -35,6 +35,7 @@ dependencies = [
     "pyyaml>=6.0",
     "kenboard>=0.1.92",
     "graphviz>=0.20",
+    "markdown>=3.6",
 ]
 
 [project.license]

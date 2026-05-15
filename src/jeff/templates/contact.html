@@ -64,7 +64,7 @@
     {% if contact.note %}
     <section class="section">
       <h2 class="section__title">Notes</h2>
-      <div class="prose prose--pre">{{ contact.note }}</div>
+      <div class="prose">{{ contact.note | markdown }}</div>
     </section>
     {% endif %}
 
@@ -79,7 +79,7 @@
             {% if inter.type %}<span class="tag tag--small">{{ inter.type }}</span>{% endif %}
           </div>
           {% if inter.note %}
-          <div class="timeline-item__body">{{ inter.note }}</div>
+          <div class="timeline-item__body">{{ inter.note | markdown }}</div>
           {% endif %}
         </div>
         {% endfor %}

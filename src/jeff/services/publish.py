@@ -103,6 +103,15 @@ def build_site(
         autoescape=True,
     )
     env.filters["whatsapp_encode"] = lambda s: quote(str(s), safe="")
+
+    import markdown as _md
+    from markupsafe import Markup
+
+    def _md_filter(text: str) -> Markup:
+        """Convert Markdown text to HTML."""
+        return Markup(_md.markdown(text))
+
+    env.filters["markdown"] = _md_filter
     contact_tpl = env.get_template("contact.html")
     index_tpl = env.get_template("index.html")
 
@@ -260,8 +269,6 @@ def build_site(
     (output_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     # Render genealogy page.
-    from markupsafe import Markup
-
     from jeff.services.genealogy import build_family_trees, tree_to_svg
 
     trees = build_family_trees(content_dir)
