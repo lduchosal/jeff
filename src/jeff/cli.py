@@ -337,32 +337,37 @@ def publish(ctx: click.Context, output: str) -> None:
     "--format",
     "fmt",
     default="squirrelmail",
-    help="Export format (squirrelmail).",
+    help="Export format (squirrelmail, json).",
 )
 @click.option(
     "--output",
     "-o",
-    default="contacts.abook",
-    help="Output file path.",
+    default=None,
+    help="Output file path (default: contacts.abook or contacts.json).",
 )
 @click.pass_context
-def export_cmd(ctx: click.Context, fmt: str, output: str) -> None:
-    r"""Export active contacts to an address book format.
+def export_cmd(ctx: click.Context, fmt: str, output: str | None) -> None:
+    r"""Export contacts to an address book or JSON format.
 
     \b
     Examples:
-      jeff export                        # → contacts.abook
-      jeff export -o /path/to/file.abook # custom path
+      jeff export                            # → contacts.abook (squirrelmail)
+      jeff export --format json              # → contacts.json (schema)
+      jeff export -o /path/to/file.json --format json
     """
-    from jeff.services.export import export_squirrelmail
+    from jeff.services.export import export_json, export_squirrelmail
 
     content_dir = _content_dir(ctx)
     cfg = ctx.obj["cfg"]
     base = cfg.jeff_file.parent if cfg.jeff_file else Path.cwd()
-    output_path = base / output
 
     if fmt == "squirrelmail":
+        output_path = base / (output or "contacts.abook")
         count = export_squirrelmail(content_dir, output_path)
+        click.echo(f"Exported {count} contact(s) to {output_path}")
+    elif fmt == "json":
+        output_path = base / (output or "contacts.json")
+        count = export_json(content_dir, output_path)
         click.echo(f"Exported {count} contact(s) to {output_path}")
     else:
         click.echo(f"Unknown format: {fmt}", err=True)

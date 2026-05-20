@@ -27,6 +27,21 @@ _MD_LIST_RE = re.compile(r"^\s{0,3}([-*+]\s|\d+\.\s)")
 _MD_EXTENSIONS = ["extra", "sane_lists"]
 
 
+def display_name(contact: dict[str, Any]) -> str:
+    """Return the display name with the family part in UPPERCASE.
+
+    Uses ``name_given`` + uppercased ``name_family`` when both are present.
+    Falls back to ``name`` as-is when ``name_family`` is missing — that field
+    is the only reliable signal of where the family portion starts, and we do
+    not want to mangle mononyms or unusual structures.
+    """
+    given = (contact.get("name_given") or "").strip()
+    family = (contact.get("name_family") or "").strip()
+    if family:
+        return f"{given} {family.upper()}".strip() if given else family.upper()
+    return contact.get("name") or ""
+
+
 def _normalize_markdown(text: str) -> str:
     """Insert blank lines before headings and list starts.
 
@@ -214,6 +229,7 @@ def build_site(
     enriched: list[_DotDict] = []
     for contact in contacts:
         dc = _DotDict(contact)
+        dc["display_name"] = display_name(contact)
         dc["is_birthday"] = dc.get("slug") in birthday_slugs
         dc["birthday_message"] = bday_msg if dc["is_birthday"] else ""
         # Compute phone_cell at render time from phones list if not in frontmatter.

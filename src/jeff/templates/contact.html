@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ contact.name }} — Contacts</title>
+  <title>{{ contact.display_name or contact.name }} — Contacts</title>
   <link rel="stylesheet" href="../css/fonts.css">
   <link rel="stylesheet" href="../css/contact.css">
 </head>
@@ -20,7 +20,7 @@
         <div class="contact-avatar--placeholder" aria-hidden="true">{{ contact.name[:1] }}</div>
       {% endif %}
       <div class="contact-header__info">
-        <h1 class="contact-name">{{ contact.name }}</h1>
+        <h1 class="contact-name">{{ contact.display_name or contact.name }}</h1>
         {% if contact.positions %}
           <p class="contact-title">{{ contact.positions[0].title or '' }}</p>
           <p class="contact-org">{{ contact.positions[0].org or '' }}</p>

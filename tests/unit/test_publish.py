@@ -4,13 +4,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jeff.services.publish import _normalize_markdown, _parse_frontmatter, build_site
+from jeff.services.publish import (
+    _normalize_markdown,
+    _parse_frontmatter,
+    build_site,
+    display_name,
+)
 
 SAMPLE_MD = """\
 ---
 uid: "urn:uuid:test-001"
 name: Jean Dupont
 slug: jean-dupont
+name_given: Jean
+name_family: Dupont
 email: "jean@example.com"
 phone: "+41791234567"
 birthday: 1985-03-15
@@ -116,6 +123,29 @@ class TestMarkdownFilter:
         assert "<li><p>" not in html
 
 
+class TestDisplayName:
+    """Family name is uppercased; given name keeps its case."""
+
+    def test_uppercases_family(self) -> None:
+        assert display_name({"name_given": "Jean", "name_family": "Dupont"}) == (
+            "Jean DUPONT"
+        )
+
+    def test_family_only(self) -> None:
+        assert display_name({"name_family": "Madonna"}) == "MADONNA"
+
+    def test_falls_back_to_name(self) -> None:
+        assert display_name({"name": "Cher"}) == "Cher"
+
+    def test_preserves_already_uppercased_family(self) -> None:
+        assert display_name({"name_given": "Luc", "name_family": "DUCHOSAL"}) == (
+            "Luc DUCHOSAL"
+        )
+
+    def test_empty(self) -> None:
+        assert display_name({}) == ""
+
+
 class TestBuildSite:
     """Tests for the full build pipeline."""
 
@@ -140,12 +170,12 @@ class TestBuildSite:
 
         # Check content.
         index = (output_dir / "index.html").read_text()
-        assert "Jean Dupont" in index
+        assert "Jean DUPONT" in index  # family name uppercased
         assert "Marie" in index
         assert "2 contacts" in index
 
         contact = (output_dir / "contacts" / "jean-dupont.html").read_text()
-        assert "Jean Dupont" in contact
+        assert "Jean DUPONT" in contact  # family name uppercased
         assert "jean@example.com" in contact
         assert "ami" in contact
 

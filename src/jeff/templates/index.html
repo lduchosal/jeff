@@ -45,7 +45,7 @@
           <div class="contact-card__avatar" aria-hidden="true">{{ contact.name[:1] }}</div>
         {% endif %}
         <div class="contact-card__body">
-          <div class="contact-card__name">🎉 {{ contact.name }}</div>
+          <div class="contact-card__name">🎉 {{ contact.display_name or contact.name }}</div>
           {% if contact.birthday %}
             <div class="contact-card__note">{{ contact.birthday }}</div>
           {% endif %}
@@ -71,7 +71,7 @@
           <div class="contact-card__avatar" aria-hidden="true">{{ contact.name[:1] }}</div>
         {% endif %}
         <div class="contact-card__body">
-          <div class="contact-card__name">{{ contact.name }}</div>
+          <div class="contact-card__name">{{ contact.display_name or contact.name }}</div>
           {% if contact.note %}
             <div class="contact-card__note">{{ contact.note[:60] }}{{ '...' if contact.note | length > 60 }}</div>
           {% endif %}
