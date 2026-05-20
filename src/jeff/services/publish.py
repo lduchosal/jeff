@@ -30,10 +30,10 @@ _MD_EXTENSIONS = ["extra", "sane_lists"]
 def display_name(contact: dict[str, Any]) -> str:
     """Return the display name with the family part in UPPERCASE.
 
-    Uses ``name_given`` + uppercased ``name_family`` when both are present.
-    Falls back to ``name`` as-is when ``name_family`` is missing — that field
-    is the only reliable signal of where the family portion starts, and we do
-    not want to mangle mononyms or unusual structures.
+    Uses ``name_given`` + uppercased ``name_family`` when both are present. Falls back
+    to ``name`` as-is when ``name_family`` is missing — that field is the only reliable
+    signal of where the family portion starts, and we do not want to mangle mononyms or
+    unusual structures.
     """
     given = (contact.get("name_given") or "").strip()
     family = (contact.get("name_family") or "").strip()

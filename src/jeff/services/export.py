@@ -36,10 +36,10 @@ _SCHEMA_FIELDS = (
 def export_json(content_dir: Path, output_path: Path) -> int:
     """Export every contact to a JSON array matching ``contact.schema.json``.
 
-    Mirrors ``jeff import``: the output of this function can be re-imported
-    without data loss for fields covered by the schema. Non-schema fields
-    (slug, photo, pere/mere/conjoint, ...) are intentionally omitted because
-    the schema does not describe them.
+    Mirrors ``jeff import``: the output of this function can be re-imported without data
+    loss for fields covered by the schema. Non-schema fields (slug, photo,
+    pere/mere/conjoint, ...) are intentionally omitted because the schema does not
+    describe them.
 
     Returns the number of contacts written.
     """

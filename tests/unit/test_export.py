@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import json
+from pathlib import Path
 
 from jeff.services.export import export_json, export_squirrelmail
 from jeff.services.import_contacts import import_from_json
