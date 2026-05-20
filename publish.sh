@@ -195,7 +195,19 @@ run_command "pdm build" "Package build"
 print_step "Publishing Package to PyPI (pdm publish)"
 if [ -z "$PDM_PUBLISH_PASSWORD" ] && [ -f "$HOME/.pypirc" ]; then
     export PDM_PUBLISH_USERNAME=__token__
-    export PDM_PUBLISH_PASSWORD=$(grep password "$HOME/.pypirc" | cut -d= -f2 | tr -d ' ')
+    # Extract password from the [pypi] section only. A blanket `grep password`
+    # also catches [testpypi] and concatenates both tokens; `cut -d= -f2` drops
+    # any `=` inside the token (PyPI tokens commonly end with base64 `==`).
+    export PDM_PUBLISH_PASSWORD=$(awk '
+        /^\[pypi\]/ { in_section=1; next }
+        /^\[/       { in_section=0 }
+        in_section && /^[[:space:]]*password[[:space:]]*=/ {
+            sub(/^[[:space:]]*password[[:space:]]*=[[:space:]]*/, "")
+            sub(/[[:space:]]+$/, "")
+            print
+            exit
+        }
+    ' "$HOME/.pypirc")
 fi
 run_command "pdm publish --no-build" "Package publishing"
 
