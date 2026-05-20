@@ -6,6 +6,7 @@ Jinja2 templates, and writes the result to ``output_dir``.
 
 from __future__ import annotations
 
+import re
 import shutil
 from importlib import resources
 from pathlib import Path
@@ -20,6 +21,34 @@ from jeff.services.triage import iter_contact_files
 _log = get_logger("publish")
 
 _CSS_FILENAME = "contact.css"
+
+_MD_HEADING_RE = re.compile(r"^#{1,6}\s")
+_MD_LIST_RE = re.compile(r"^\s{0,3}([-*+]\s|\d+\.\s)")
+_MD_EXTENSIONS = ["extra", "sane_lists"]
+
+
+def _normalize_markdown(text: str) -> str:
+    """Insert blank lines before headings and list starts.
+
+    Python-Markdown requires a blank line before headings and before the first item of a
+    list. Notes written by hand often omit those, so headings and lists silently render
+    as plain text. This pre-processor inserts the missing blank line without breaking
+    tight (consecutive) list items.
+    """
+    lines = text.split("\n")
+    out: list[str] = []
+    in_list = False
+    for line in lines:
+        is_heading = bool(_MD_HEADING_RE.match(line))
+        is_list = bool(_MD_LIST_RE.match(line))
+        if (is_heading or (is_list and not in_list)) and out and out[-1].strip():
+            out.append("")
+        out.append(line)
+        if is_list:
+            in_list = True
+        elif line.strip():
+            in_list = False
+    return "\n".join(out)
 
 
 def _parse_frontmatter(path: Path) -> dict[str, Any]:
@@ -109,7 +138,9 @@ def build_site(
 
     def _md_filter(text: str) -> Markup:
         """Convert Markdown text to HTML."""
-        return Markup(_md.markdown(text))
+        return Markup(
+            _md.markdown(_normalize_markdown(text), extensions=_MD_EXTENSIONS)
+        )
 
     env.filters["markdown"] = _md_filter
     contact_tpl = env.get_template("contact.html")

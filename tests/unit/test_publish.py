@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jeff.services.publish import _parse_frontmatter, build_site
+from jeff.services.publish import _normalize_markdown, _parse_frontmatter, build_site
 
 SAMPLE_MD = """\
 ---
@@ -80,6 +80,40 @@ class TestParseFrontmatter:
         f.write_text("Just some text")
         data = _parse_frontmatter(f)
         assert data == {}
+
+
+class TestMarkdownFilter:
+    """Tests for the Markdown-to-HTML conversion used in notes."""
+
+    def _render(self, text: str) -> str:
+        import markdown as _md
+
+        from jeff.services.publish import _MD_EXTENSIONS
+
+        return _md.markdown(_normalize_markdown(text), extensions=_MD_EXTENSIONS)
+
+    def test_heading_without_blank_line(self) -> None:
+        """## headings render even when the previous line is non-empty."""
+        html = self._render("Intro\n## Titre 2\nSuite")
+        assert "<h2>Titre 2</h2>" in html
+
+    def test_list_with_bold_item(self) -> None:
+        """- **bold** list items render as <ul><li><strong>."""
+        html = self._render("Texte avant\n- **tiret et gras**\n- normal\n")
+        assert "<ul>" in html
+        assert "<strong>tiret et gras</strong>" in html
+        assert "<li>normal</li>" in html
+
+    def test_inline_bold(self) -> None:
+        """**bold** renders inside a paragraph."""
+        html = self._render("Du **gras** au milieu.")
+        assert "<strong>gras</strong>" in html
+
+    def test_tight_list_no_paragraph_wrap(self) -> None:
+        """Consecutive list items stay tight (no <p> inside <li>)."""
+        html = self._render("Avant\n- un\n- deux\n- trois\n")
+        assert "<li>un</li>" in html
+        assert "<li><p>" not in html
 
 
 class TestBuildSite:
