@@ -1213,7 +1213,7 @@ files = [
 
 [[package]]
 name = "kenboard"
-version = "0.2.2"
+version = "0.2.3"
 requires_python = ">=3.11"
 summary = "Project management dashboard with kanban boards, burndown charts, and category-based organization. Flask API backend with MySQL storage and static HTML generation."
 groups = ["default"]
@@ -1238,8 +1238,8 @@ dependencies = [
     "zxcvbn>=4.5.0",
 ]
 files = [
-    {file = "kenboard-0.2.2-py3-none-any.whl", hash = "sha256:e048b47a970458e1a275876ca4365f9c0ae3e7159a014534512e6b7cd6d140ef"},
-    {file = "kenboard-0.2.2.tar.gz", hash = "sha256:0162535a03cdc5e476f0f3d1a2b7fbaad183292324740a73984a67b32ab8939a"},
+    {file = "kenboard-0.2.3-py3-none-any.whl", hash = "sha256:96a4156fcc0b201d687e1131ba4516be3d5dec76378b7121b8805e6feb1a6dd0"},
+    {file = "kenboard-0.2.3.tar.gz", hash = "sha256:a8f4cb06e979428b29d2a9135aeaa707dab76ba7336915b5e4bf6aaca891f1cd"},
 ]
 
 [[package]]
