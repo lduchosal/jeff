@@ -1,6 +1,6 @@
 [project]
 name = "jeff-contacts"
-version = "0.1.27"
+version = "0.1.28"
 description = "CRM Markdown synchronisé depuis CardDAV (Baikal), publié en site statique Hugo."
 authors = [
     { name = "lduchosal" },
